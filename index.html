@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Semillas — Generador & Validador</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Courier New', monospace;
+  background: #0d0d0d;
+  color: #e0e0e0;
+  min-height: 100vh;
+  padding: 32px 20px;
+}
+
+.page { max-width: 980px; margin: 0 auto; }
+
+h1 {
+  font-size: 42px;
+  font-weight: bold;
+  color: #00ff88;
+  letter-spacing: -1px;
+  margin-bottom: 6px;
+}
+.sub { color: #555; font-size: 12px; margin-bottom: 36px; }
+
+/* sections */
+.sec {
+  background: #161616;
+  border: 1px solid #2a2a2a;
+  border-left: 3px solid #00ff88;
+  border-radius: 4px;
+  padding: 24px;
+  margin-bottom: 18px;
+}
+.sec.purple { border-left-color: #7c6fff; }
+.sec-title {
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #00ff88;
+  margin-bottom: 18px;
+}
+.sec.purple .sec-title { color: #7c6fff; }
+
+/* method buttons */
+.mrow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 0; }
+.mbtn {
+  padding: 14px 18px;
+  background: #0d0d0d;
+  border: 1px solid #2a2a2a;
+  border-radius: 3px;
+  color: #888;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: bold;
+  transition: all 0.15s;
+}
+.mbtn:hover { border-color: #00ff88; color: #ccc; }
+.mbtn.active { background: rgba(0,255,136,0.08); border-color: #00ff88; color: #00ff88; }
+.mbtn small { display: block; font-size: 10px; color: #555; font-weight: normal; margin-top: 3px; }
+.mbtn.active small { color: #00aa55; }
+
+/* param panels */
+.panel { display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid #2a2a2a; }
+
+.formula {
+  background: rgba(0,255,136,0.05);
+  border: 1px solid rgba(0,255,136,0.15);
+  border-radius: 3px;
+  padding: 10px 14px;
+  font-size: 11px;
+  color: #00cc66;
+  margin-bottom: 18px;
+  line-height: 1.7;
+}
+
+.irow { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #555; }
+.field input {
+  background: #0d0d0d;
+  border: 1px solid #2a2a2a;
+  border-radius: 3px;
+  color: #e0e0e0;
+  padding: 11px 14px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: bold;
+  outline: none;
+  width: 100%;
+}
+.field input:focus { border-color: #00ff88; }
+.field small { font-size: 10px; color: #444; }
+
+/* checkboxes */
+.crow { display: flex; gap: 8px; margin-bottom: 12px; }
+.cgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(185px, 1fr)); gap: 8px; }
+.cbtn {
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 14px;
+  background: #0d0d0d;
+  border: 1px solid #2a2a2a;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: bold;
+  color: #666;
+  transition: all 0.15s;
+  user-select: none;
+}
+.cbtn:hover { border-color: #7c6fff; color: #aaa; }
+.cbtn.on { background: rgba(124,111,255,0.08); border-color: #7c6fff; color: #7c6fff; }
+.cbtn .dot { width: 7px; height: 7px; border-radius: 50%; border: 1px solid #444; flex-shrink: 0; transition: all 0.15s; }
+.cbtn.on .dot { background: #7c6fff; border-color: #7c6fff; }
+
+/* action buttons */
+.abrow { display: flex; gap: 10px; margin-top: 4px; }
+.abtn {
+  padding: 13px 28px;
+  border: none;
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.abtn-p { background: #00ff88; color: #0d0d0d; }
+.abtn-p:hover { background: #fff; }
+.abtn-s { background: transparent; color: #444; border: 1px solid #2a2a2a; }
+.abtn-s:hover { color: #888; border-color: #555; }
+
+/* results */
+#results { display: none; margin-top: 40px; }
+.rtag { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: #00ff88; display: block; margin-bottom: 18px; }
+
+.strip { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; margin-bottom: 24px; }
+.sbox { background: #161616; border: 1px solid #2a2a2a; border-radius: 3px; padding: 14px; text-align: center; }
+.sbox .sv { font-size: 20px; font-weight: bold; line-height: 1; }
+.sbox .sl { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #444; margin-top: 5px; }
+.gc { color: #00ff88; } .rc { color: #ff3e6c; } .bc { color: #7c6fff; } .wc { color: #e0e0e0; }
+
+/* result blocks */
+.rblock { background: #161616; border: 1px solid #2a2a2a; border-radius: 4px; margin-bottom: 10px; }
+.rhead {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 18px; cursor: pointer;
+}
+.rhead:hover { background: rgba(255,255,255,0.02); }
+.rhead .rname { font-size: 14px; font-weight: bold; }
+.badge { padding: 3px 12px; border-radius: 20px; font-size: 9px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; }
+.pass-b { background: rgba(0,255,136,0.1); color: #00ff88; border: 1px solid rgba(0,255,136,0.3); }
+.fail-b { background: rgba(255,62,108,0.1); color: #ff3e6c; border: 1px solid rgba(255,62,108,0.3); }
+.info-b { background: rgba(124,111,255,0.1); color: #7c6fff; border: 1px solid rgba(124,111,255,0.3); }
+
+.rbody { display: none; padding: 18px; border-top: 1px solid #2a2a2a; }
+.rbody.open { display: block; }
+
+.kv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 0 20px; margin-bottom: 14px; }
+.kv { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 11px; gap: 8px; }
+.kv .k { color: #555; } .kv .v { color: #ccc; font-weight: bold; text-align: right; }
+
+.vline { font-size: 11px; padding: 9px 13px; border-radius: 2px; margin-bottom: 14px; }
+.vline.vp { background: rgba(0,255,136,0.07); color: #00ff88; border-left: 3px solid #00ff88; }
+.vline.vf { background: rgba(255,62,108,0.07); color: #ff3e6c; border-left: 3px solid #ff3e6c; }
+
+.tit { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #444; margin: 14px 0 6px; }
+
+.tscroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 320px; }
+thead th { text-align: left; padding: 7px 10px; background: rgba(255,255,255,0.03); color: #555; font-size: 9px; letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px solid #2a2a2a; white-space: nowrap; }
+tbody td { padding: 6px 10px; border-bottom: 1px solid rgba(255,255,255,0.03); color: #ccc; white-space: nowrap; }
+tbody tr:hover td { background: rgba(255,255,255,0.02); }
+
+.tg { color: #00ff88 !important; font-weight: bold; }
+.tb { color: #7c6fff !important; font-weight: bold; }
+.tr { color: #ff3e6c !important; }
+
+.tnote { font-size: 10px; color: #444; margin-top: 5px; }
+.errbox { background: rgba(255,62,108,0.08); border: 1px solid rgba(255,62,108,0.3); color: #ff3e6c; padding: 12px 16px; border-radius: 3px; font-size: 11px; margin-top: 14px; }
+
+@media(max-width:520px) {
+  .mrow { grid-template-columns: 1fr; }
+  .irow { grid-template-columns: 1fr; }
+  h1 { font-size: 30px; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<h1>SEMILLAS</h1>
+<p class="sub">// generador pseudoaleatorio &amp; validador estadístico</p>
+
+<!-- 01 MÉTODO -->
+<div class="sec">
+  <div class="sec-title">01 — Método de generación</div>
+  <div class="mrow">
+    <button class="mbtn" id="btn_mult" onclick="selectMethod('mult')">
+      Multiplicativo
+      <small>α × β → 8 dígitos → centro → rᵢ = 0.centro</small>
+    </button>
+    <button class="mbtn" id="btn_cuad" onclick="selectMethod('cuad')">
+      Cuadrados Medios
+      <small>X² → pad 2d → centro → rᵢ = X/10ᵈ</small>
+    </button>
+  </div>
+
+  <!-- Panel Multiplicativo -->
+  <div class="panel" id="panel_mult">
+    <div class="formula">
+      α × β &nbsp;→&nbsp; completar a 8 dígitos &nbsp;→&nbsp; Centro = posiciones [3,4,5,6] &nbsp;→&nbsp; rᵢ = 0.Centro &nbsp;→&nbsp; βᵢ₊₁ = Centro
+    </div>
+    <div class="irow">
+      <div class="field">
+        <label>α — semilla fija</label>
+        <input type="number" id="in_alpha" placeholder="Ej: 5625" min="1">
+        <small>No cambia nunca</small>
+      </div>
+      <div class="field">
+        <label>β₀ — semilla inicial</label>
+        <input type="number" id="in_beta" placeholder="Ej: 7531" min="1">
+        <small>βᵢ₊₁ = Centro</small>
+      </div>
+      <div class="field">
+        <label>N válidos</label>
+        <input type="number" id="in_nm" value="50" min="1">
+        <small>Cuántos rᵢ necesitas</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel Cuadrados Medios -->
+  <div class="panel" id="panel_cuad">
+    <div class="formula">
+      X₀ &nbsp;→&nbsp; X² &nbsp;→&nbsp; completar a 2d dígitos &nbsp;→&nbsp; extraer d dígitos centrales &nbsp;→&nbsp; rᵢ = Xᵢ/10ᵈ &nbsp;→&nbsp; Xᵢ₊₁ = Centro
+    </div>
+    <div class="irow">
+      <div class="field">
+        <label>X₀ — semilla</label>
+        <input type="number" id="in_x0" placeholder="Ej: 7531" min="1">
+        <small>Valor inicial</small>
+      </div>
+      <div class="field">
+        <label>d — dígitos</label>
+        <input type="number" id="in_d" value="4" min="2" max="8">
+        <small>Entre 2 y 8</small>
+      </div>
+      <div class="field">
+        <label>N válidos</label>
+        <input type="number" id="in_nc" value="50" min="1">
+        <small>Cuántos rᵢ necesitas</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 02 PRUEBAS -->
+<div class="sec purple">
+  <div class="sec-title">02 — Pruebas de validación</div>
+  <div class="crow">
+    <button class="abtn abtn-s" style="padding:6px 12px;font-size:10px;" onclick="toggleAll(true)">Todas</button>
+    <button class="abtn abtn-s" style="padding:6px 12px;font-size:10px;" onclick="toggleAll(false)">Ninguna</button>
+  </div>
+  <div class="cgrid">
+    <div class="cbtn" id="cb_med" onclick="toggleTest(this)"><span class="dot"></span>Medias</div>
+    <div class="cbtn" id="cb_var" onclick="toggleTest(this)"><span class="dot"></span>Varianza</div>
+    <div class="cbtn" id="cb_chi" onclick="toggleTest(this)"><span class="dot"></span>Chi Cuadrada</div>
+    <div class="cbtn" id="cb_ks"  onclick="toggleTest(this)"><span class="dot"></span>Kolmogórov-Smirnov</div>
+    <div class="cbtn" id="cb_aa"  onclick="toggleTest(this)"><span class="dot"></span>Arriba y Abajo</div>
+    <div class="cbtn" id="cb_pk"  onclick="toggleTest(this)"><span class="dot"></span>Póker</div>
+    <div class="cbtn" id="cb_mc"  onclick="toggleTest(this)"><span class="dot"></span>Monte Carlo π</div>
+  </div>
+</div>
+
+<div class="abrow">
+  <button class="abtn abtn-p" onclick="run()">▶ Ejecutar</button>
+  <button class="abtn abtn-s" onclick="resetApp()">↺ Reiniciar</button>
+</div>
+
+<!-- RESULTS -->
+<div id="results">
+  <span class="rtag">— Resultados —</span>
+  <div class="strip" id="strip"></div>
+  <div id="blocks"></div>
+</div>
+
+</div><!-- /page -->
+
+<script>
+// ── state ──────────────────────────────────────────────
+var currentMethod = null;
+
+// ── UI helpers ─────────────────────────────────────────
+function el(id) { return document.getElementById(id); }
+
+function selectMethod(m) {
+  currentMethod = m;
+  el('btn_mult').className = 'mbtn' + (m === 'mult' ? ' active' : '');
+  el('btn_cuad').className = 'mbtn' + (m === 'cuad' ? ' active' : '');
+  el('panel_mult').style.display = m === 'mult' ? 'block' : 'none';
+  el('panel_cuad').style.display = m === 'cuad' ? 'block' : 'none';
+}
+
+function toggleTest(btn) { btn.classList.toggle('on'); }
+
+function toggleAll(on) {
+  var btns = document.querySelectorAll('.cbtn');
+  for (var i = 0; i < btns.length; i++) {
+    if (on) btns[i].classList.add('on');
+    else btns[i].classList.remove('on');
+  }
+}
+
+function isOn(id) { return el(id) && el(id).classList.contains('on'); }
+
+function tog(head) { head.nextElementSibling.classList.toggle('open'); }
+
+// ── generators ─────────────────────────────────────────
+function genMult(alpha, beta0, maxN) {
+  var rows = [], seen = {}, beta = beta0;
+  for (var i = 0; i < maxN; i++) {
+    var prod = alpha * beta;
+    var raw = '' + prod;
+    // pad to 8 digits
+    while (raw.length < 8) raw = '0' + raw;
+    // take last 8 if longer
+    if (raw.length > 8) raw = raw.slice(raw.length - 8);
+    var centro = raw.slice(2, 6);
+    var cn = parseInt(centro, 10);
+    var ri = cn / 10000;
+    rows.push({ i: i+1, alpha: alpha, beta: beta, prod: prod, s8: raw, centro: centro, ri: ri });
+    if (cn === 0 || seen[cn]) break;
+    seen[cn] = 1;
+    beta = cn;
+  }
+  return rows;
+}
+
+function genCuad(x0, d, maxN) {
+  var rows = [], seen = {}, x = x0;
+  var mod = Math.pow(10, d), pad = d * 2;
+  for (var i = 0; i < maxN; i++) {
+    var sq = x * x;
+    var raw = '' + sq;
+    while (raw.length < pad) raw = '0' + raw;
+    if (raw.length > pad) raw = raw.slice(raw.length - pad);
+    var start = Math.floor((pad - d) / 2);
+    var centro = raw.slice(start, start + d);
+    var cn = parseInt(centro, 10);
+    var ri = cn / mod;
+    rows.push({ i: i+1, xp: x, sq: sq, s2d: raw, centro: centro, xi: cn, ri: ri });
+    if (cn === 0 || seen[cn]) break;
+    seen[cn] = 1;
+    x = cn;
+  }
+  return rows;
+}
+
+// ── statistical tests ───────────────────────────────────
+function testMedias(nums) {
+  var n = nums.length, sum = 0, i;
+  for (i = 0; i < n; i++) sum += nums[i];
+  var mean = sum / n;
+  var lo = 0.5 - 1.96 / Math.sqrt(12 * n);
+  var hi = 0.5 + 1.96 / Math.sqrt(12 * n);
+  var pass = mean >= lo && mean <= hi;
+  var cs = 0, rows = [];
+  for (i = 0; i < Math.min(n, 300); i++) {
+    cs += nums[i];
+    rows.push({ 'i': i+1, 'rᵢ': nums[i].toFixed(6), 'Σrᵢ': cs.toFixed(6), 'X̄ acum.': (cs/(i+1)).toFixed(6) });
+  }
+  return {
+    pass: pass,
+    det: { 'N': n, 'Σrᵢ': sum.toFixed(6), 'X̄': mean.toFixed(6), 'Z α/2': '1.96', 'Lím. inf.': lo.toFixed(6), 'Lím. sup.': hi.toFixed(6) },
+    verd: 'X̄ = ' + mean.toFixed(6) + (pass ? ' ∈ ' : ' ∉ ') + '[' + lo.toFixed(6) + ', ' + hi.toFixed(6) + ']  →  ' + (pass ? 'PASA ✓' : 'FALLA ✗'),
+    rows: rows, note: n > 300 ? 'Mostrando 300 de ' + n : ''
+  };
+}
+
+function testVarianza(nums) {
+  var n = nums.length, sum = 0, i;
+  for (i = 0; i < n; i++) sum += nums[i];
+  var mean = sum / n, ssq = 0;
+  for (i = 0; i < n; i++) ssq += (nums[i] - mean) * (nums[i] - mean);
+  var s2 = ssq / (n - 1);
+  var clo = chi025(n-1), chi = chiCrit(n-1);
+  var lo = clo / (12*(n-1)), hi = chi / (12*(n-1));
+  var pass = s2 >= lo && s2 <= hi;
+  var cs = 0, rows = [];
+  for (i = 0; i < Math.min(n, 300); i++) {
+    var d = nums[i] - mean; cs += d * d;
+    rows.push({ 'i': i+1, 'rᵢ': nums[i].toFixed(6), 'rᵢ−X̄': d.toFixed(6), '(rᵢ−X̄)²': (d*d).toFixed(8), 'Σ(rᵢ−X̄)²': cs.toFixed(8) });
+  }
+  return {
+    pass: pass,
+    det: { 'N': n, 'X̄': mean.toFixed(6), 'S²': s2.toFixed(8), '1/12': (1/12).toFixed(8), 'χ²₀.₀₂₅': clo.toFixed(4), 'χ²₀.₉₇₅': chi.toFixed(4), 'Lím. inf.': lo.toFixed(8), 'Lím. sup.': hi.toFixed(8) },
+    verd: 'S² = ' + s2.toFixed(6) + (pass ? ' ∈ ' : ' ∉ ') + '[' + lo.toFixed(6) + ', ' + hi.toFixed(6) + ']  →  ' + (pass ? 'PASA ✓' : 'FALLA ✗'),
+    rows: rows, note: n > 300 ? 'Mostrando 300 de ' + n : ''
+  };
+}
+
+function testChi(nums) {
+  var k = 10, n = nums.length, e = n / k, i;
+  var obs = [0,0,0,0,0,0,0,0,0,0];
+  for (i = 0; i < n; i++) { var b = Math.floor(nums[i] * k); if (b >= k) b = k-1; obs[b]++; }
+  var chi2 = 0, rows = [];
+  for (i = 0; i < k; i++) {
+    var o = obs[i], c = (o-e)*(o-e)/e; chi2 += c;
+    rows.push({ 'Intervalo': '[' + (i/k).toFixed(1) + ', ' + ((i+1)/k).toFixed(1) + ')', 'Oᵢ': o, 'Eᵢ': e.toFixed(4), 'Oᵢ−Eᵢ': (o-e).toFixed(4), '(Oᵢ−Eᵢ)²/Eᵢ': c.toFixed(6) });
+  }
+  var df = k-1, crit = chiCrit(df), pass = chi2 <= crit;
+  return {
+    pass: pass,
+    det: { 'N': n, 'k': k, 'Eᵢ': e.toFixed(4), 'χ² calc.': chi2.toFixed(6), 'gl': df, 'χ² crít.': crit.toFixed(4) },
+    verd: 'χ² = ' + chi2.toFixed(4) + (pass ? ' ≤ ' : ' > ') + crit.toFixed(4) + ' (gl=' + df + ')  →  ' + (pass ? 'PASA ✓' : 'FALLA ✗'),
+    rows: rows, note: ''
+  };
+}
+
+function testKS(nums) {
+  var n = nums.length, i;
+  var sorted = nums.slice().sort(function(a,b){ return a-b; });
+  var Dmax = 0, rows = [];
+  for (i = 0; i < n; i++) {
+    var Ft = sorted[i], Fe = (i+1)/n, Fp = i/n;
+    var d1 = Math.abs(Fe-Ft), d2 = Math.abs(Fp-Ft), D = d1 > d2 ? d1 : d2;
+    if (D > Dmax) Dmax = D;
+    if (i < 300) rows.push({ 'i': i+1, 'Xᵢ': sorted[i].toFixed(6), 'F(Xᵢ)': Ft.toFixed(6), 'i/N': Fe.toFixed(6), '(i-1)/N': Fp.toFixed(6), '|i/N−F|': d1.toFixed(6), '|(i-1)/N−F|': d2.toFixed(6), 'Dᵢ': D.toFixed(6) });
+  }
+  var crit = 1.36 / Math.sqrt(n), pass = Dmax <= crit;
+  return {
+    pass: pass,
+    det: { 'N': n, 'D máx': Dmax.toFixed(6), 'D crít=1.36/√N': crit.toFixed(6) },
+    verd: 'D = ' + Dmax.toFixed(6) + (pass ? ' ≤ ' : ' > ') + crit.toFixed(6) + '  →  ' + (pass ? 'PASA ✓' : 'FALLA ✗'),
+    rows: rows, note: n > 300 ? 'Mostrando 300 de ' + n : ''
+  };
+}
+
+function testArriba(nums) {
+  var n = nums.length, i, signs = [], cambios = {};
+  for (i = 0; i < n-1; i++) signs.push(nums[i+1] > nums[i] ? '+' : '-');
+  var runs = 0, cur = null;
+  for (i = 0; i < signs.length; i++) { if (signs[i] !== cur) { runs++; cambios[i+1] = 1; cur = signs[i]; } }
+  var mu = 2*(n-1)/3, sig2 = (16*n-29)/90, sig = Math.sqrt(sig2);
+  var z = (runs - mu) / sig, pass = Math.abs(z) <= 1.96;
+  var rows = [];
+  for (i = 0; i < Math.min(signs.length, 300); i++) {
+    rows.push({ 'i': i+1, 'rᵢ': nums[i].toFixed(6), 'rᵢ₊₁': nums[i+1].toFixed(6), 'Signo': signs[i], 'Racha': cambios[i+1] ? '★' : '' });
+  }
+  return {
+    pass: pass,
+    det: { 'N': n, 'Rachas R': runs, 'μ': mu.toFixed(4), 'σ²': sig2.toFixed(4), 'σ': sig.toFixed(4), 'Z': z.toFixed(4), 'Z crít.': '±1.96' },
+    verd: '|Z| = ' + Math.abs(z).toFixed(4) + (pass ? ' ≤ 1.96  →  PASA ✓' : ' > 1.96  →  FALLA ✗'),
+    rows: rows, note: n-1 > 300 ? 'Mostrando 300 de ' + (n-1) + ' pares' : ''
+  };
+}
+
+function testPoker(nums) {
+  var n = nums.length, i, j;
+  var keys = ['td','par','dp','ter','ful','pok','qui'];
+  var labs = { td:'Todos distintos', par:'Un par', dp:'Dos pares', ter:'Tercia', ful:'Full', pok:'Póker', qui:'Quintilla' };
+  var probs = { td:.3024, par:.504, dp:.108, ter:.072, ful:.009, pok:.0045, qui:.0001 };
+  var cats = { td:0, par:0, dp:0, ter:0, ful:0, pok:0, qui:0 };
+  var numRows = [];
+  for (i = 0; i < n; i++) {
+    var r = nums[i];
+    var str = r.toFixed(5).replace('0.','');
+    if (str.length < 5) while (str.length < 5) str = str + '0';
+    str = str.slice(0, 5);
+    var digs = [parseInt(str[0]), parseInt(str[1]), parseInt(str[2]), parseInt(str[3]), parseInt(str[4])];
+    var freq = {};
+    for (j = 0; j < 5; j++) freq[digs[j]] = (freq[digs[j]] || 0) + 1;
+    var counts = Object.keys(freq).map(function(k){ return freq[k]; }).sort(function(a,b){ return b-a; });
+    var cat;
+    if (counts[0]===1) cat='td';
+    else if (counts[0]===2 && (counts[1]||0)===1) cat='par';
+    else if (counts[0]===2 && counts[1]===2) cat='dp';
+    else if (counts[0]===3 && (counts[1]||0)===1) cat='ter';
+    else if (counts[0]===3 && counts[1]===2) cat='ful';
+    else if (counts[0]===4) cat='pok';
+    else cat='qui';
+    cats[cat]++;
+    if (i < 300) numRows.push({ 'i': i+1, 'rᵢ': r.toFixed(6), 'Dígitos': digs.join(' '), 'Categoría': labs[cat] });
+  }
+  var chi2 = 0, chiRows = [];
+  for (j = 0; j < keys.length; j++) {
+    var k = keys[j], o = cats[k], e = probs[k]*n, c = (o-e)*(o-e)/e; chi2 += c;
+    chiRows.push({ 'Categoría': labs[k], 'pᵢ': probs[k].toFixed(4), 'Oᵢ': o, 'Eᵢ=pᵢ·N': e.toFixed(4), 'Oᵢ−Eᵢ': (o-e).toFixed(4), '(Oᵢ−Eᵢ)²/Eᵢ': c.toFixed(6) });
+  }
+  var crit = chiCrit(6), pass = chi2 <= crit;
+  return {
+    pass: pass,
+    det: { 'N': n, 'χ² calc.': chi2.toFixed(6), 'gl': 6, 'χ² crít.': crit.toFixed(4) },
+    verd: 'χ² = ' + chi2.toFixed(4) + (pass ? ' ≤ ' : ' > ') + crit.toFixed(4) + '  →  ' + (pass ? 'PASA ✓' : 'FALLA ✗'),
+    numRows: numRows, numNote: n > 300 ? 'Mostrando 300 de ' + n : '',
+    rows: chiRows, note: ''
+  };
+}
+
+function testMC(nums) {
+  var pairs = Math.floor(nums.length / 2), inside = 0, i, rows = [];
+  for (i = 0; i < pairs; i++) {
+    var x = nums[i*2], y = nums[i*2+1], d2 = x*x+y*y, inn = d2 <= 1;
+    if (inn) inside++;
+    if (i < 300) { var p = 4*inside/(i+1); rows.push({ 'Par': i+1, 'x': x.toFixed(6), 'y': y.toFixed(6), 'x²+y²': d2.toFixed(6), '≤1?': inn?'SÍ':'NO', 'Dentro': inside, 'π est.': p.toFixed(6) }); }
+  }
+  var piE = 4*inside/pairs, err = Math.abs(piE - Math.PI)/Math.PI*100, pass = err <= 5;
+  return {
+    pass: pass,
+    det: { 'Pares': pairs, 'Dentro': inside, 'π est.': piE.toFixed(6), 'π real': Math.PI.toFixed(6), 'Error %': err.toFixed(3)+'%' },
+    verd: 'π ≈ ' + piE.toFixed(6) + ', error = ' + err.toFixed(3) + '%  →  ' + (pass ? 'PASA ✓' : 'FALLA ✗'),
+    rows: rows, note: pairs > 300 ? 'Mostrando 300 de ' + pairs : ''
+  };
+}
+
+// ── math helpers ───────────────────────────────────────
+function chiCrit(df) {
+  var t = {1:3.841,2:5.991,3:7.815,4:9.488,5:11.07,6:12.592,7:14.067,8:15.507,9:16.919,10:18.307,15:24.996,20:31.41,25:37.652,30:43.773,40:55.758,50:67.505};
+  if (t[df]) return t[df];
+  var h = 2/(9*df); return df * Math.pow(1-h+1.645*Math.sqrt(h), 3);
+}
+function chi025(df) {
+  var t = {1:.001,2:.051,3:.216,4:.484,5:.831,6:1.237,7:1.69,8:2.18,9:2.7,10:3.247,15:6.262,20:9.591,30:16.791,50:32.357};
+  if (t[df]) return t[df];
+  return Math.max(.001, df * Math.pow(1-2/(9*df)-1.96*Math.sqrt(2/(9*df)), 3));
+}
+
+// ── table builder ──────────────────────────────────────
+function mkTable(rows) {
+  if (!rows || !rows.length) return '';
+  var cols = Object.keys(rows[0]);
+  var h = '<div class="tscroll"><table><thead><tr>';
+  for (var c = 0; c < cols.length; c++) h += '<th>' + cols[c] + '</th>';
+  h += '</tr></thead><tbody>';
+  for (var r = 0; r < rows.length; r++) {
+    h += '<tr>';
+    for (var c = 0; c < cols.length; c++) {
+      var col = cols[c], val = rows[r][col], cls = '';
+      if (col === 'rᵢ = 0.Centro' || col === 'rᵢ válido') cls = ' class="tg"';
+      else if (col === 'Centro' || col === 'Dígitos' || col === 'Categoría' || col === 'βᵢ₊₁' || col === 'Xᵢ₊₁') cls = ' class="tb"';
+      else if (col === 'Signo' && val === '+') cls = ' class="tg"';
+      else if (col === 'Signo' && val === '-') cls = ' class="tr"';
+      else if (col === 'Racha' && val === '★') cls = ' class="tb"';
+      else if (col === '≤1?' && val === 'SÍ') cls = ' class="tg"';
+      else if (col === '≤1?' && val === 'NO') cls = ' class="tr"';
+      h += '<td' + cls + '>' + val + '</td>';
+    }
+    h += '</tr>';
+  }
+  return h + '</tbody></table></div>';
+}
+
+function mkKV(obj) {
+  var h = '<div class="kv-grid">', keys = Object.keys(obj);
+  for (var i = 0; i < keys.length; i++) h += '<div class="kv"><span class="k">' + keys[i] + '</span><span class="v">' + obj[keys[i]] + '</span></div>';
+  return h + '</div>';
+}
+
+function mkBlock(title, badge, bclass, body) {
+  return '<div class="rblock"><div class="rhead" onclick="tog(this)"><span class="rname">' + title + '</span><span class="badge ' + bclass + '">' + badge + '</span></div><div class="rbody open">' + body + '</div></div>';
+}
+
+// ── main ───────────────────────────────────────────────
+function run() {
+  if (!currentMethod) { alert('Primero selecciona un método (Multiplicativo o Cuadrados Medios).'); return; }
+
+  var nDesired, genRows, nums, genName, genKV, genTbl;
+
+  if (currentMethod === 'mult') {
+    var alpha = parseInt(el('in_alpha').value, 10);
+    var beta0 = parseInt(el('in_beta').value, 10);
+    nDesired  = parseInt(el('in_nm').value, 10);
+    if (!alpha || alpha < 1) { alert('Ingresa α (alfa).'); return; }
+    if (!beta0 || beta0 < 1) { alert('Ingresa β₀ (beta).'); return; }
+    if (!nDesired || nDesired < 1) { alert('Ingresa N válidos.'); return; }
+
+    genRows = genMult(alpha, beta0, Math.max(nDesired * 5, 2000));
+    nums = [];
+    for (var i = 0; i < genRows.length; i++) nums.push(genRows[i].ri);
+    genName = 'Multiplicativo (α×β)';
+    genKV = { 'α (fija)': alpha, 'β₀ inicial': beta0, 'Iteraciones': genRows.length, 'rᵢ generados': nums.length };
+    genTbl = [];
+    for (var i = 0; i < genRows.length; i++) {
+      var row = genRows[i];
+      genTbl.push({ 'i': row.i, 'α': row.alpha, 'β': row.beta, 'α×β': row.prod, 'Prod. 8 díg.': row.s8, 'Centro': row.centro, 'rᵢ = 0.Centro': row.ri.toFixed(6), 'βᵢ₊₁': i+1 < genRows.length ? genRows[i+1].beta : '(fin)' });
+    }
+
+  } else {
+    var x0  = parseInt(el('in_x0').value, 10);
+    var d   = parseInt(el('in_d').value, 10) || 4;
+    nDesired = parseInt(el('in_nc').value, 10);
+    if (!x0 || x0 < 1) { alert('Ingresa X₀.'); return; }
+    if (!nDesired || nDesired < 1) { alert('Ingresa N válidos.'); return; }
+
+    genRows = genCuad(x0, d, Math.max(nDesired * 5, 2000));
+    nums = [];
+    for (var i = 0; i < genRows.length; i++) nums.push(genRows[i].ri);
+    genName = 'Cuadrados Medios (d=' + d + ')';
+    genKV = { 'X₀': x0, 'd (dígitos)': d, 'Módulo 10ᵈ': Math.pow(10,d), 'Iteraciones': genRows.length, 'rᵢ generados': nums.length };
+    genTbl = [];
+    for (var i = 0; i < genRows.length; i++) {
+      var row = genRows[i];
+      genTbl.push({ 'i': row.i, 'Xᵢ₋₁': row.xp, 'Xᵢ₋₁²': row.sq, 'X² (pad)': row.s2d, 'Centro': row.centro, 'Xᵢ': row.xi, 'rᵢ = Xᵢ/10ᵈ': row.ri.toFixed(6), 'Xᵢ₊₁': i+1 < genRows.length ? genRows[i+1].xp : '(fin)' });
+    }
+  }
+
+  if (nums.length < 5) {
+    el('results').style.display = 'block';
+    el('strip').innerHTML = '';
+    el('blocks').innerHTML = '<div class="errbox">⚠ Muy pocos números generados (ciclo corto o colapso a 0). Cambia las semillas.</div>';
+    el('results').scrollIntoView({ behavior: 'smooth' });
+    return;
+  }
+
+  // run selected tests
+  var testDefs = [
+    { id: 'cb_med', fn: testMedias, name: 'Prueba de Medias' },
+    { id: 'cb_var', fn: testVarianza, name: 'Prueba de Varianza' },
+    { id: 'cb_chi', fn: testChi, name: 'Chi Cuadrada' },
+    { id: 'cb_ks',  fn: testKS, name: 'Kolmogórov-Smirnov' },
+    { id: 'cb_aa',  fn: testArriba, name: 'Arriba y Abajo' },
+    { id: 'cb_pk',  fn: testPoker, name: 'Póker' },
+    { id: 'cb_mc',  fn: testMC, name: 'Monte Carlo π' }
+  ];
+
+  var selected = [], allPass = true;
+  for (var i = 0; i < testDefs.length; i++) {
+    if (isOn(testDefs[i].id)) {
+      var res = testDefs[i].fn(nums);
+      selected.push({ name: testDefs[i].name, res: res });
+      if (!res.pass) allPass = false;
+    }
+  }
+
+  var passed = 0;
+  for (var i = 0; i < selected.length; i++) if (selected[i].res.pass) passed++;
+  var failed = selected.length - passed;
+  var obtained = allPass ? Math.min(nums.length, nDesired) : 0;
+
+  // summary strip
+  el('strip').innerHTML =
+    '<div class="sbox"><div class="sv bc" style="font-size:11px;line-height:1.4;">' + genName + '</div><div class="sl">Método</div></div>' +
+    '<div class="sbox"><div class="sv wc">' + nums.length + '</div><div class="sl">Generados</div></div>' +
+    '<div class="sbox"><div class="sv gc">' + passed + '</div><div class="sl">Pruebas OK</div></div>' +
+    '<div class="sbox"><div class="sv ' + (failed > 0 ? 'rc' : 'gc') + '">' + failed + '</div><div class="sl">Fallidas</div></div>' +
+    '<div class="sbox"><div class="sv ' + (obtained >= nDesired ? 'gc' : 'rc') + '">' + obtained + '/' + nDesired + '</div><div class="sl">N válidos</div></div>' +
+    '<div class="sbox"><div class="sv ' + (allPass ? 'gc' : 'rc') + '" style="font-size:16px;">' + (allPass ? 'PASA' : 'FALLA') + '</div><div class="sl">Veredicto</div></div>';
+
+  var html = '';
+
+  // generation block
+  html += mkBlock('⬡ Generación — ' + genName, genRows.length + ' iter.', 'info-b',
+    mkKV(genKV) + '<div class="tit">Tabla paso a paso</div>' + mkTable(genTbl) +
+    (genRows.length > 300 ? '<p class="tnote">Mostrando 300 de ' + genRows.length + '</p>' : ''));
+
+  // test blocks
+  for (var i = 0; i < selected.length; i++) {
+    var s = selected[i], r = s.res;
+    var body = '<div class="vline ' + (r.pass ? 'vp' : 'vf') + '">' + r.verd + '</div>' + mkKV(r.det);
+    if (s.name === 'Póker') {
+      body += '<div class="tit">Clasificación por número</div>' + mkTable(r.numRows) + (r.numNote ? '<p class="tnote">' + r.numNote + '</p>' : '');
+      body += '<div class="tit">Resumen Chi Cuadrada</div>' + mkTable(r.rows);
+    } else if (r.rows && r.rows.length) {
+      body += '<div class="tit">Tabla paso a paso</div>' + mkTable(r.rows) + (r.note ? '<p class="tnote">' + r.note + '</p>' : '');
+    }
+    html += mkBlock(s.name, r.pass ? 'PASA' : 'FALLA', r.pass ? 'pass-b' : 'fail-b', body);
+  }
+
+  // valid numbers
+  if (allPass && obtained > 0) {
+    var vrows = [];
+    for (var i = 0; i < obtained; i++) vrows.push({ 'N°': i+1, 'rᵢ válido': nums[i].toFixed(6) });
+    html += mkBlock('✓ Números válidos', obtained + ' de ' + nDesired, 'pass-b',
+      '<div class="vline vp">Se obtuvieron ' + obtained + ' de ' + nDesired + ' N válidos. La semilla aprueba todas las pruebas.</div>' +
+      '<div class="tit">Lista rᵢ</div>' + mkTable(vrows));
+  } else if (!allPass) {
+    html += '<div class="errbox">⚠ La semilla no aprueba todas las pruebas. No se entregan los ' + nDesired + ' N válidos.</div>';
+  }
+
+  el('blocks').innerHTML = html;
+  el('results').style.display = 'block';
+  el('results').scrollIntoView({ behavior: 'smooth' });
+}
+
+function resetApp() {
+  currentMethod = null;
+  el('btn_mult').className = 'mbtn';
+  el('btn_cuad').className = 'mbtn';
+  el('panel_mult').style.display = 'none';
+  el('panel_cuad').style.display = 'none';
+  el('in_alpha').value = ''; el('in_beta').value = ''; el('in_x0').value = '';
+  el('in_d').value = '4'; el('in_nm').value = '50'; el('in_nc').value = '50';
+  toggleAll(false);
+  el('results').style.display = 'none';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
