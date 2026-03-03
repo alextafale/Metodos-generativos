@@ -26,7 +26,6 @@ h1 {
 }
 .sub { color: #555; font-size: 12px; margin-bottom: 36px; }
 
-/* sections */
 .sec {
   background: #161616;
   border: 1px solid #2a2a2a;
@@ -45,7 +44,6 @@ h1 {
 }
 .sec.purple .sec-title { color: #7c6fff; }
 
-/* method buttons */
 .mrow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 0; }
 .mbtn {
   padding: 14px 18px;
@@ -65,7 +63,6 @@ h1 {
 .mbtn small { display: block; font-size: 10px; color: #555; font-weight: normal; margin-top: 3px; }
 .mbtn.active small { color: #00aa55; }
 
-/* param panels */
 .panel { display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid #2a2a2a; }
 
 .formula {
@@ -98,7 +95,6 @@ h1 {
 .field input:focus { border-color: #00ff88; }
 .field small { font-size: 10px; color: #444; }
 
-/* checkboxes */
 .crow { display: flex; gap: 8px; margin-bottom: 12px; }
 .cgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(185px, 1fr)); gap: 8px; }
 .cbtn {
@@ -120,7 +116,6 @@ h1 {
 .cbtn .dot { width: 7px; height: 7px; border-radius: 50%; border: 1px solid #444; flex-shrink: 0; transition: all 0.15s; }
 .cbtn.on .dot { background: #7c6fff; border-color: #7c6fff; }
 
-/* action buttons */
 .abrow { display: flex; gap: 10px; margin-top: 4px; }
 .abtn {
   padding: 13px 28px;
@@ -139,7 +134,6 @@ h1 {
 .abtn-s { background: transparent; color: #444; border: 1px solid #2a2a2a; }
 .abtn-s:hover { color: #888; border-color: #555; }
 
-/* results */
 #results { display: none; margin-top: 40px; }
 .rtag { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: #00ff88; display: block; margin-bottom: 18px; }
 
@@ -149,7 +143,6 @@ h1 {
 .sbox .sl { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #444; margin-top: 5px; }
 .gc { color: #00ff88; } .rc { color: #ff3e6c; } .bc { color: #7c6fff; } .wc { color: #e0e0e0; }
 
-/* result blocks */
 .rblock { background: #161616; border: 1px solid #2a2a2a; border-radius: 4px; margin-bottom: 10px; }
 .rhead {
   display: flex; justify-content: space-between; align-items: center;
@@ -207,11 +200,19 @@ tbody tr:hover td { background: rgba(255,255,255,0.02); }
   <div class="mrow">
     <button class="mbtn" id="btn_mult" onclick="selectMethod('mult')">
       Multiplicativo
-      <small>α × β → 8 dígitos → centro → rᵢ = 0.centro</small>
+      <small>α × β → 8 dígitos → centro → rᵢ = 0.Centro</small>
     </button>
     <button class="mbtn" id="btn_cuad" onclick="selectMethod('cuad')">
       Cuadrados Medios
       <small>X² → pad 2d → centro → rᵢ = X/10ᵈ</small>
+    </button>
+    <button class="mbtn" id="btn_clin" onclick="selectMethod('clin')">
+      Congruencial Lineal
+      <small>Xₙ₊₁ = (a·Xₙ + c) mod m → rᵢ = Xₙ₊₁/m</small>
+    </button>
+    <button class="mbtn" id="btn_cmul" onclick="selectMethod('cmul')">
+      Congruencial Multiplicativo
+      <small>Xₙ₊₁ = (a·Xₙ) mod m → rᵢ = Xₙ₊₁/m</small>
     </button>
   </div>
 
@@ -262,6 +263,71 @@ tbody tr:hover td { background: rgba(255,255,255,0.02); }
       </div>
     </div>
   </div>
+
+  <!-- Panel Congruencial Lineal -->
+  <div class="panel" id="panel_clin">
+    <div class="formula">
+      Xₙ₊₁ = (a · Xₙ + c) mod m &nbsp;→&nbsp; rᵢ = Xₙ₊₁ / m<br>
+      Condiciones de Hull-Dobell: mcd(c,m)=1 &nbsp;|&nbsp; a≡1(mod p) para todo primo p|m &nbsp;|&nbsp; si 4|m entonces 4|(a-1)
+    </div>
+    <div class="irow">
+      <div class="field">
+        <label>X₀ — semilla</label>
+        <input type="number" id="in_cl_x0" placeholder="Ej: 7" min="0">
+        <small>Valor inicial (≥ 0)</small>
+      </div>
+      <div class="field">
+        <label>a — multiplicador</label>
+        <input type="number" id="in_cl_a" placeholder="Ej: 1664525" min="1">
+        <small>Factor a</small>
+      </div>
+      <div class="field">
+        <label>c — incremento</label>
+        <input type="number" id="in_cl_c" placeholder="Ej: 1013904223" min="0">
+        <small>c ≥ 0</small>
+      </div>
+      <div class="field">
+        <label>m — módulo</label>
+        <input type="number" id="in_cl_m" placeholder="Ej: 2147483648" min="2">
+        <small>m > 0</small>
+      </div>
+      <div class="field">
+        <label>N válidos</label>
+        <input type="number" id="in_cl_n" value="50" min="1">
+        <small>Cuántos rᵢ necesitas</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel Congruencial Multiplicativo -->
+  <div class="panel" id="panel_cmul">
+    <div class="formula">
+      Xₙ₊₁ = (a · Xₙ) mod m &nbsp;→&nbsp; rᵢ = Xₙ₊₁ / m<br>
+      Requiere: X₀ impar, m = 2ᵏ (potencia de 2), a ≡ 3 o 5 (mod 8)
+    </div>
+    <div class="irow">
+      <div class="field">
+        <label>X₀ — semilla (impar)</label>
+        <input type="number" id="in_cm_x0" placeholder="Ej: 7531" min="1">
+        <small>Debe ser impar</small>
+      </div>
+      <div class="field">
+        <label>a — multiplicador</label>
+        <input type="number" id="in_cm_a" placeholder="Ej: 1229" min="1">
+        <small>a ≡ 3 ó 5 (mod 8)</small>
+      </div>
+      <div class="field">
+        <label>m — módulo</label>
+        <input type="number" id="in_cm_m" placeholder="Ej: 65536" min="2">
+        <small>Potencia de 2</small>
+      </div>
+      <div class="field">
+        <label>N válidos</label>
+        <input type="number" id="in_cm_n" value="50" min="1">
+        <small>Cuántos rᵢ necesitas</small>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- 02 PRUEBAS -->
@@ -294,21 +360,20 @@ tbody tr:hover td { background: rgba(255,255,255,0.02); }
   <div id="blocks"></div>
 </div>
 
-</div><!-- /page -->
+</div>
 
 <script>
-// ── state ──────────────────────────────────────────────
 var currentMethod = null;
 
-// ── UI helpers ─────────────────────────────────────────
 function el(id) { return document.getElementById(id); }
 
 function selectMethod(m) {
   currentMethod = m;
-  el('btn_mult').className = 'mbtn' + (m === 'mult' ? ' active' : '');
-  el('btn_cuad').className = 'mbtn' + (m === 'cuad' ? ' active' : '');
-  el('panel_mult').style.display = m === 'mult' ? 'block' : 'none';
-  el('panel_cuad').style.display = m === 'cuad' ? 'block' : 'none';
+  var all = ['mult','cuad','clin','cmul'];
+  for (var i = 0; i < all.length; i++) {
+    el('btn_' + all[i]).className = 'mbtn' + (m === all[i] ? ' active' : '');
+    el('panel_' + all[i]).style.display = m === all[i] ? 'block' : 'none';
+  }
 }
 
 function toggleTest(btn) { btn.classList.toggle('on'); }
@@ -322,25 +387,24 @@ function toggleAll(on) {
 }
 
 function isOn(id) { return el(id) && el(id).classList.contains('on'); }
-
 function tog(head) { head.nextElementSibling.classList.toggle('open'); }
 
-// ── generators ─────────────────────────────────────────
+// ── GENERADORES (bug corregido: verificar ANTES de agregar) ──────────────
+
 function genMult(alpha, beta0, maxN) {
   var rows = [], seen = {}, beta = beta0;
   for (var i = 0; i < maxN; i++) {
     var prod = alpha * beta;
     var raw = '' + prod;
-    // pad to 8 digits
     while (raw.length < 8) raw = '0' + raw;
-    // take last 8 if longer
     if (raw.length > 8) raw = raw.slice(raw.length - 8);
     var centro = raw.slice(2, 6);
     var cn = parseInt(centro, 10);
     var ri = cn / 10000;
-    rows.push({ i: i+1, alpha: alpha, beta: beta, prod: prod, s8: raw, centro: centro, ri: ri });
+    // ✓ FIX: verificar repetición ANTES de agregar
     if (cn === 0 || seen[cn]) break;
     seen[cn] = 1;
+    rows.push({ i: rows.length+1, alpha: alpha, beta: beta, prod: prod, s8: raw, centro: centro, ri: ri });
     beta = cn;
   }
   return rows;
@@ -358,15 +422,45 @@ function genCuad(x0, d, maxN) {
     var centro = raw.slice(start, start + d);
     var cn = parseInt(centro, 10);
     var ri = cn / mod;
-    rows.push({ i: i+1, xp: x, sq: sq, s2d: raw, centro: centro, xi: cn, ri: ri });
+    // ✓ FIX: verificar repetición ANTES de agregar
     if (cn === 0 || seen[cn]) break;
     seen[cn] = 1;
+    rows.push({ i: rows.length+1, xp: x, sq: sq, s2d: raw, centro: centro, xi: cn, ri: ri });
     x = cn;
   }
   return rows;
 }
 
-// ── statistical tests ───────────────────────────────────
+function genCongruencialLineal(x0, a, c, m, maxN) {
+  var rows = [], seen = {}, x = x0;
+  for (var i = 0; i < maxN; i++) {
+    var xn = (a * x + c) % m;
+    var ri = xn / m;
+    // verificar repetición ANTES de agregar
+    if (seen[xn]) break;
+    seen[xn] = 1;
+    rows.push({ i: rows.length+1, xn_prev: x, 'a·Xₙ+c': a*x+c, 'mod m': xn, ri: ri });
+    x = xn;
+  }
+  return rows;
+}
+
+function genCongruencialMult(x0, a, m, maxN) {
+  var rows = [], seen = {}, x = x0;
+  for (var i = 0; i < maxN; i++) {
+    var xn = (a * x) % m;
+    var ri = xn / m;
+    // verificar repetición ANTES de agregar
+    if (xn === 0 || seen[xn]) break;
+    seen[xn] = 1;
+    rows.push({ i: rows.length+1, xn_prev: x, 'a·Xₙ': a*x, 'mod m': xn, ri: ri });
+    x = xn;
+  }
+  return rows;
+}
+
+// ── PRUEBAS ESTADÍSTICAS ─────────────────────────────────────────────────
+
 function testMedias(nums) {
   var n = nums.length, sum = 0, i;
   for (i = 0; i < n; i++) sum += nums[i];
@@ -523,7 +617,7 @@ function testMC(nums) {
   };
 }
 
-// ── math helpers ───────────────────────────────────────
+// ── HELPERS MATEMÁTICOS ──────────────────────────────────────────────────
 function chiCrit(df) {
   var t = {1:3.841,2:5.991,3:7.815,4:9.488,5:11.07,6:12.592,7:14.067,8:15.507,9:16.919,10:18.307,15:24.996,20:31.41,25:37.652,30:43.773,40:55.758,50:67.505};
   if (t[df]) return t[df];
@@ -535,7 +629,7 @@ function chi025(df) {
   return Math.max(.001, df * Math.pow(1-2/(9*df)-1.96*Math.sqrt(2/(9*df)), 3));
 }
 
-// ── table builder ──────────────────────────────────────
+// ── TABLA / KV ───────────────────────────────────────────────────────────
 function mkTable(rows) {
   if (!rows || !rows.length) return '';
   var cols = Object.keys(rows[0]);
@@ -546,8 +640,8 @@ function mkTable(rows) {
     h += '<tr>';
     for (var c = 0; c < cols.length; c++) {
       var col = cols[c], val = rows[r][col], cls = '';
-      if (col === 'rᵢ = 0.Centro' || col === 'rᵢ válido') cls = ' class="tg"';
-      else if (col === 'Centro' || col === 'Dígitos' || col === 'Categoría' || col === 'βᵢ₊₁' || col === 'Xᵢ₊₁') cls = ' class="tb"';
+      if (col === 'rᵢ = 0.Centro' || col === 'rᵢ válido' || col === 'ri') cls = ' class="tg"';
+      else if (col === 'Centro' || col === 'Dígitos' || col === 'Categoría' || col === 'βᵢ₊₁' || col === 'Xᵢ₊₁' || col === 'mod m') cls = ' class="tb"';
       else if (col === 'Signo' && val === '+') cls = ' class="tg"';
       else if (col === 'Signo' && val === '-') cls = ' class="tr"';
       else if (col === 'Racha' && val === '★') cls = ' class="tb"';
@@ -570,9 +664,9 @@ function mkBlock(title, badge, bclass, body) {
   return '<div class="rblock"><div class="rhead" onclick="tog(this)"><span class="rname">' + title + '</span><span class="badge ' + bclass + '">' + badge + '</span></div><div class="rbody open">' + body + '</div></div>';
 }
 
-// ── main ───────────────────────────────────────────────
+// ── MAIN ─────────────────────────────────────────────────────────────────
 function run() {
-  if (!currentMethod) { alert('Primero selecciona un método (Multiplicativo o Cuadrados Medios).'); return; }
+  if (!currentMethod) { alert('Primero selecciona un método.'); return; }
 
   var nDesired, genRows, nums, genName, genKV, genTbl;
 
@@ -585,17 +679,14 @@ function run() {
     if (!nDesired || nDesired < 1) { alert('Ingresa N válidos.'); return; }
 
     genRows = genMult(alpha, beta0, Math.max(nDesired * 5, 2000));
-    nums = [];
-    for (var i = 0; i < genRows.length; i++) nums.push(genRows[i].ri);
+    nums = genRows.map(function(r){ return r.ri; });
     genName = 'Multiplicativo (α×β)';
     genKV = { 'α (fija)': alpha, 'β₀ inicial': beta0, 'Iteraciones': genRows.length, 'rᵢ generados': nums.length };
-    genTbl = [];
-    for (var i = 0; i < genRows.length; i++) {
-      var row = genRows[i];
-      genTbl.push({ 'i': row.i, 'α': row.alpha, 'β': row.beta, 'α×β': row.prod, 'Prod. 8 díg.': row.s8, 'Centro': row.centro, 'rᵢ = 0.Centro': row.ri.toFixed(6), 'βᵢ₊₁': i+1 < genRows.length ? genRows[i+1].beta : '(fin)' });
-    }
+    genTbl = genRows.map(function(row, idx) {
+      return { 'i': row.i, 'α': row.alpha, 'β': row.beta, 'α×β': row.prod, 'Prod. 8 díg.': row.s8, 'Centro': row.centro, 'rᵢ = 0.Centro': row.ri.toFixed(6), 'βᵢ₊₁': idx+1 < genRows.length ? genRows[idx+1].beta : '(fin)' };
+    });
 
-  } else {
+  } else if (currentMethod === 'cuad') {
     var x0  = parseInt(el('in_x0').value, 10);
     var d   = parseInt(el('in_d').value, 10) || 4;
     nDesired = parseInt(el('in_nc').value, 10);
@@ -603,26 +694,65 @@ function run() {
     if (!nDesired || nDesired < 1) { alert('Ingresa N válidos.'); return; }
 
     genRows = genCuad(x0, d, Math.max(nDesired * 5, 2000));
-    nums = [];
-    for (var i = 0; i < genRows.length; i++) nums.push(genRows[i].ri);
+    nums = genRows.map(function(r){ return r.ri; });
     genName = 'Cuadrados Medios (d=' + d + ')';
     genKV = { 'X₀': x0, 'd (dígitos)': d, 'Módulo 10ᵈ': Math.pow(10,d), 'Iteraciones': genRows.length, 'rᵢ generados': nums.length };
-    genTbl = [];
-    for (var i = 0; i < genRows.length; i++) {
-      var row = genRows[i];
-      genTbl.push({ 'i': row.i, 'Xᵢ₋₁': row.xp, 'Xᵢ₋₁²': row.sq, 'X² (pad)': row.s2d, 'Centro': row.centro, 'Xᵢ': row.xi, 'rᵢ = Xᵢ/10ᵈ': row.ri.toFixed(6), 'Xᵢ₊₁': i+1 < genRows.length ? genRows[i+1].xp : '(fin)' });
-    }
+    genTbl = genRows.map(function(row, idx) {
+      return { 'i': row.i, 'Xᵢ₋₁': row.xp, 'Xᵢ₋₁²': row.sq, 'X² (pad)': row.s2d, 'Centro': row.centro, 'Xᵢ': row.xi, 'rᵢ = Xᵢ/10ᵈ': row.ri.toFixed(6), 'Xᵢ₊₁': idx+1 < genRows.length ? genRows[idx+1].xp : '(fin)' };
+    });
+
+  } else if (currentMethod === 'clin') {
+    var x0cl = parseInt(el('in_cl_x0').value, 10);
+    var acl  = parseInt(el('in_cl_a').value, 10);
+    var ccl  = parseInt(el('in_cl_c').value, 10);
+    var mcl  = parseInt(el('in_cl_m').value, 10);
+    nDesired  = parseInt(el('in_cl_n').value, 10);
+    if (isNaN(x0cl) || x0cl < 0) { alert('Ingresa X₀ (≥ 0).'); return; }
+    if (!acl || acl < 1) { alert('Ingresa a (multiplicador).'); return; }
+    if (isNaN(ccl) || ccl < 0) { alert('Ingresa c (incremento ≥ 0).'); return; }
+    if (!mcl || mcl < 2) { alert('Ingresa m (módulo > 1).'); return; }
+    if (!nDesired || nDesired < 1) { alert('Ingresa N válidos.'); return; }
+
+    genRows = genCongruencialLineal(x0cl, acl, ccl, mcl, Math.max(nDesired * 5, 2000));
+    nums = genRows.map(function(r){ return r.ri; });
+    genName = 'Congruencial Lineal';
+    genKV = { 'X₀': x0cl, 'a': acl, 'c': ccl, 'm': mcl, 'Iteraciones': genRows.length, 'rᵢ generados': nums.length };
+    genTbl = genRows.map(function(row, idx) {
+      return { 'i': row.i, 'Xₙ': row.xn_prev, 'a·Xₙ+c': row['a·Xₙ+c'], 'Xₙ₊₁=mod m': row['mod m'], 'rᵢ=Xₙ₊₁/m': row.ri.toFixed(6), 'Xₙ₊₂': idx+1 < genRows.length ? genRows[idx+1].xn_prev : '(fin)' };
+    });
+
+  } else if (currentMethod === 'cmul') {
+    var x0cm = parseInt(el('in_cm_x0').value, 10);
+    var acm  = parseInt(el('in_cm_a').value, 10);
+    var mcm  = parseInt(el('in_cm_m').value, 10);
+    nDesired  = parseInt(el('in_cm_n').value, 10);
+    if (!x0cm || x0cm < 1) { alert('Ingresa X₀ (debe ser impar > 0).'); return; }
+    if (x0cm % 2 === 0) { alert('X₀ debe ser impar para el método Congruencial Multiplicativo.'); return; }
+    if (!acm || acm < 1) { alert('Ingresa a (multiplicador).'); return; }
+    if (!mcm || mcm < 2) { alert('Ingresa m (módulo > 1, idealmente potencia de 2).'); return; }
+    if (!nDesired || nDesired < 1) { alert('Ingresa N válidos.'); return; }
+
+    genRows = genCongruencialMult(x0cm, acm, mcm, Math.max(nDesired * 5, 2000));
+    nums = genRows.map(function(r){ return r.ri; });
+    genName = 'Congruencial Multiplicativo';
+    genKV = { 'X₀': x0cm, 'a': acm, 'm': mcm, 'Iteraciones': genRows.length, 'rᵢ generados': nums.length };
+    genTbl = genRows.map(function(row, idx) {
+      return { 'i': row.i, 'Xₙ': row.xn_prev, 'a·Xₙ': row['a·Xₙ'], 'Xₙ₊₁=mod m': row['mod m'], 'rᵢ=Xₙ₊₁/m': row.ri.toFixed(6), 'Xₙ₊₂': idx+1 < genRows.length ? genRows[idx+1].xn_prev : '(fin)' };
+    });
   }
 
   if (nums.length < 5) {
     el('results').style.display = 'block';
     el('strip').innerHTML = '';
-    el('blocks').innerHTML = '<div class="errbox">⚠ Muy pocos números generados (ciclo corto o colapso a 0). Cambia las semillas.</div>';
+    el('blocks').innerHTML = '<div class="errbox">⚠ Muy pocos números generados (' + nums.length + '). El ciclo es muy corto o colapsó a 0. Cambia los parámetros.</div>';
     el('results').scrollIntoView({ behavior: 'smooth' });
     return;
   }
 
-  // run selected tests
+  // Limitar a nDesired si se generaron más
+  var numsUsed = nums.length > nDesired ? nums.slice(0, nDesired) : nums;
+  var genTblUsed = genTbl.length > nDesired ? genTbl.slice(0, nDesired) : genTbl;
+
   var testDefs = [
     { id: 'cb_med', fn: testMedias, name: 'Prueba de Medias' },
     { id: 'cb_var', fn: testVarianza, name: 'Prueba de Varianza' },
@@ -636,7 +766,7 @@ function run() {
   var selected = [], allPass = true;
   for (var i = 0; i < testDefs.length; i++) {
     if (isOn(testDefs[i].id)) {
-      var res = testDefs[i].fn(nums);
+      var res = testDefs[i].fn(numsUsed);
       selected.push({ name: testDefs[i].name, res: res });
       if (!res.pass) allPass = false;
     }
@@ -645,25 +775,25 @@ function run() {
   var passed = 0;
   for (var i = 0; i < selected.length; i++) if (selected[i].res.pass) passed++;
   var failed = selected.length - passed;
-  var obtained = allPass ? Math.min(nums.length, nDesired) : 0;
+  var obtained = numsUsed.length;
+  var canDeliver = obtained >= nDesired;
 
-  // summary strip
   el('strip').innerHTML =
     '<div class="sbox"><div class="sv bc" style="font-size:11px;line-height:1.4;">' + genName + '</div><div class="sl">Método</div></div>' +
-    '<div class="sbox"><div class="sv wc">' + nums.length + '</div><div class="sl">Generados</div></div>' +
+    '<div class="sbox"><div class="sv wc">' + nums.length + '</div><div class="sl">Únicos generados</div></div>' +
     '<div class="sbox"><div class="sv gc">' + passed + '</div><div class="sl">Pruebas OK</div></div>' +
     '<div class="sbox"><div class="sv ' + (failed > 0 ? 'rc' : 'gc') + '">' + failed + '</div><div class="sl">Fallidas</div></div>' +
-    '<div class="sbox"><div class="sv ' + (obtained >= nDesired ? 'gc' : 'rc') + '">' + obtained + '/' + nDesired + '</div><div class="sl">N válidos</div></div>' +
-    '<div class="sbox"><div class="sv ' + (allPass ? 'gc' : 'rc') + '" style="font-size:16px;">' + (allPass ? 'PASA' : 'FALLA') + '</div><div class="sl">Veredicto</div></div>';
+    '<div class="sbox"><div class="sv ' + (canDeliver ? 'gc' : 'rc') + '">' + obtained + '/' + nDesired + '</div><div class="sl">N válidos</div></div>' +
+    '<div class="sbox"><div class="sv ' + (allPass && canDeliver ? 'gc' : 'rc') + '" style="font-size:16px;">' + (allPass && canDeliver ? 'PASA' : 'FALLA') + '</div><div class="sl">Veredicto</div></div>';
 
   var html = '';
 
-  // generation block
-  html += mkBlock('⬡ Generación — ' + genName, genRows.length + ' iter.', 'info-b',
-    mkKV(genKV) + '<div class="tit">Tabla paso a paso</div>' + mkTable(genTbl) +
-    (genRows.length > 300 ? '<p class="tnote">Mostrando 300 de ' + genRows.length + '</p>' : ''));
+  html += mkBlock('⬡ Generación — ' + genName, genRows.length + ' únicos', 'info-b',
+    mkKV(genKV) +
+    (!canDeliver ? '<div class="vline vf">⚠ Solo se generaron ' + nums.length + ' números únicos antes de que el ciclo se repitiera. Se necesitan ' + nDesired + '. Cambia los parámetros.</div>' : '') +
+    '<div class="tit">Tabla paso a paso (primeros ' + Math.min(genTblUsed.length, 300) + ')</div>' + mkTable(genTblUsed.slice(0, 300)) +
+    (genTblUsed.length > 300 ? '<p class="tnote">Mostrando 300 de ' + genTblUsed.length + '</p>' : ''));
 
-  // test blocks
   for (var i = 0; i < selected.length; i++) {
     var s = selected[i], r = s.res;
     var body = '<div class="vline ' + (r.pass ? 'vp' : 'vf') + '">' + r.verd + '</div>' + mkKV(r.det);
@@ -676,15 +806,16 @@ function run() {
     html += mkBlock(s.name, r.pass ? 'PASA' : 'FALLA', r.pass ? 'pass-b' : 'fail-b', body);
   }
 
-  // valid numbers
-  if (allPass && obtained > 0) {
+  if (allPass && canDeliver) {
     var vrows = [];
-    for (var i = 0; i < obtained; i++) vrows.push({ 'N°': i+1, 'rᵢ válido': nums[i].toFixed(6) });
+    for (var i = 0; i < obtained; i++) vrows.push({ 'N°': i+1, 'rᵢ válido': numsUsed[i].toFixed(6) });
     html += mkBlock('✓ Números válidos', obtained + ' de ' + nDesired, 'pass-b',
-      '<div class="vline vp">Se obtuvieron ' + obtained + ' de ' + nDesired + ' N válidos. La semilla aprueba todas las pruebas.</div>' +
+      '<div class="vline vp">Se obtuvieron ' + obtained + ' de ' + nDesired + ' números válidos únicos. La semilla aprueba todas las pruebas.</div>' +
       '<div class="tit">Lista rᵢ</div>' + mkTable(vrows));
+  } else if (!canDeliver) {
+    html += '<div class="errbox">⚠ No se pudieron generar ' + nDesired + ' números únicos con estos parámetros (ciclo de longitud ' + nums.length + '). Cambia la semilla o los parámetros.</div>';
   } else if (!allPass) {
-    html += '<div class="errbox">⚠ La semilla no aprueba todas las pruebas. No se entregan los ' + nDesired + ' N válidos.</div>';
+    html += '<div class="errbox">⚠ La semilla no aprueba todas las pruebas seleccionadas. Revisa los resultados anteriores.</div>';
   }
 
   el('blocks').innerHTML = html;
@@ -694,12 +825,15 @@ function run() {
 
 function resetApp() {
   currentMethod = null;
-  el('btn_mult').className = 'mbtn';
-  el('btn_cuad').className = 'mbtn';
-  el('panel_mult').style.display = 'none';
-  el('panel_cuad').style.display = 'none';
-  el('in_alpha').value = ''; el('in_beta').value = ''; el('in_x0').value = '';
-  el('in_d').value = '4'; el('in_nm').value = '50'; el('in_nc').value = '50';
+  var all = ['mult','cuad','clin','cmul'];
+  for (var i = 0; i < all.length; i++) {
+    el('btn_' + all[i]).className = 'mbtn';
+    el('panel_' + all[i]).style.display = 'none';
+  }
+  var fields = ['in_alpha','in_beta','in_x0','in_cl_x0','in_cl_a','in_cl_c','in_cl_m','in_cm_x0','in_cm_a','in_cm_m'];
+  for (var i = 0; i < fields.length; i++) el(fields[i]).value = '';
+  el('in_d').value = '4';
+  el('in_nm').value = '50'; el('in_nc').value = '50'; el('in_cl_n').value = '50'; el('in_cm_n').value = '50';
   toggleAll(false);
   el('results').style.display = 'none';
   window.scrollTo({ top: 0, behavior: 'smooth' });
