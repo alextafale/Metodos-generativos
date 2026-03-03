@@ -3,840 +3,517 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Semillas — Generador & Validador</title>
+<title>Semillas — Generador Pseudoaleatorio</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-
-body {
-  font-family: 'Courier New', monospace;
-  background: #0d0d0d;
-  color: #e0e0e0;
-  min-height: 100vh;
-  padding: 32px 20px;
+:root {
+  --bg: #07080f;
+  --surface: rgba(255,255,255,0.04);
+  --surface-hover: rgba(255,255,255,0.07);
+  --border: rgba(255,255,255,0.08);
+  --border-bright: rgba(255,255,255,0.18);
+  --accent1: #c084fc;
+  --accent2: #38bdf8;
+  --accent3: #f472b6;
+  --accent4: #4ade80;
+  --text: #f1f5f9;
+  --text-muted: rgba(241,245,249,0.55);
+  --text-dim: rgba(241,245,249,0.25);
+  --pass: #4ade80;
+  --fail: #fb7185;
+  --info: #818cf8;
+  --radius: 16px;
+  --radius-sm: 10px;
 }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+.cosmos{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 80% 60% at 15% 10%,rgba(192,132,252,0.13) 0%,transparent 60%),
+    radial-gradient(ellipse 60% 50% at 85% 85%,rgba(56,189,248,0.1) 0%,transparent 55%),
+    radial-gradient(ellipse 50% 40% at 60% 35%,rgba(244,114,182,0.07) 0%,transparent 50%),#07080f;}
+.cosmos::after{content:'';position:absolute;inset:0;background-image:radial-gradient(circle,rgba(255,255,255,0.55) 1px,transparent 1px);background-size:48px 48px;opacity:.025;}
+.page{position:relative;z-index:1;max-width:1020px;margin:0 auto;padding:60px 24px 100px;}
 
-.page { max-width: 980px; margin: 0 auto; }
+/* HEADER */
+.header{margin-bottom:64px;animation:fadeUp .6s ease both;}
+.eyebrow{font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--accent1);margin-bottom:16px;display:block;}
+.header h1{font-family:'DM Serif Display',serif;font-size:clamp(52px,8vw,88px);line-height:.9;
+  background:linear-gradient(135deg,#e2d9f3 0%,var(--accent1) 40%,var(--accent2) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:16px;}
+.header-sub{font-size:13px;color:var(--text-muted);line-height:1.6;max-width:420px;}
 
-h1 {
-  font-size: 42px;
-  font-weight: bold;
-  color: #00ff88;
-  letter-spacing: -1px;
-  margin-bottom: 6px;
-}
-.sub { color: #555; font-size: 12px; margin-bottom: 36px; }
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);backdrop-filter:blur(20px);padding:32px;margin-bottom:20px;transition:border-color .3s;}
+.card:hover{border-color:rgba(255,255,255,0.11);}
+.card:nth-child(1){animation:fadeUp .5s .05s ease both;}
+.card:nth-child(2){animation:fadeUp .5s .12s ease both;}
+.card:nth-child(3){animation:fadeUp .5s .19s ease both;}
 
-.sec {
-  background: #161616;
-  border: 1px solid #2a2a2a;
-  border-left: 3px solid #00ff88;
-  border-radius: 4px;
-  padding: 24px;
-  margin-bottom: 18px;
-}
-.sec.purple { border-left-color: #7c6fff; }
-.sec-title {
-  font-size: 10px;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  color: #00ff88;
-  margin-bottom: 18px;
-}
-.sec.purple .sec-title { color: #7c6fff; }
+.sec-label{font-size:9px;letter-spacing:4px;text-transform:uppercase;color:var(--text-dim);margin-bottom:24px;display:flex;align-items:center;gap:12px;}
+.sec-label::after{content:'';flex:1;height:1px;background:var(--border);}
 
-.mrow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 0; }
-.mbtn {
-  padding: 14px 18px;
-  background: #0d0d0d;
-  border: 1px solid #2a2a2a;
-  border-radius: 3px;
-  color: #888;
-  cursor: pointer;
-  text-align: left;
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: bold;
-  transition: all 0.15s;
-}
-.mbtn:hover { border-color: #00ff88; color: #ccc; }
-.mbtn.active { background: rgba(0,255,136,0.08); border-color: #00ff88; color: #00ff88; }
-.mbtn small { display: block; font-size: 10px; color: #555; font-weight: normal; margin-top: 3px; }
-.mbtn.active small { color: #00aa55; }
+/* METHODS */
+.method-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.method-btn{background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);padding:20px;cursor:pointer;text-align:left;font-family:'DM Mono',monospace;color:var(--text-muted);transition:all .25s cubic-bezier(.4,0,.2,1);position:relative;overflow:hidden;}
+.method-btn::before{content:'';position:absolute;inset:0;opacity:0;background:linear-gradient(135deg,rgba(192,132,252,.1),rgba(56,189,248,.07));transition:opacity .25s;}
+.method-btn:hover{border-color:var(--border-bright);color:var(--text);}
+.method-btn:hover::before{opacity:1;}
+.method-btn.active{border-color:var(--accent1);color:var(--text);box-shadow:0 0 0 1px rgba(192,132,252,.25),inset 0 0 40px rgba(192,132,252,.05);}
+.method-btn.active::before{opacity:1;}
+.btn-tag{position:absolute;top:12px;right:12px;font-size:9px;letter-spacing:2px;text-transform:uppercase;background:rgba(192,132,252,.1);color:var(--accent1);border:1px solid rgba(192,132,252,.25);border-radius:20px;padding:2px 8px;opacity:0;transition:opacity .25s;}
+.method-btn.active .btn-tag{opacity:1;}
+.btn-name{font-size:13px;font-weight:500;margin-bottom:6px;display:block;}
+.method-btn.active .btn-name{color:var(--accent1);}
+.btn-desc{font-size:10px;color:var(--text-dim);line-height:1.5;}
+.method-btn.active .btn-desc{color:var(--text-muted);}
 
-.panel { display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid #2a2a2a; }
+/* PANELS */
+.panel{display:none;margin-top:28px;padding-top:28px;border-top:1px solid var(--border);}
+.formula-box{background:rgba(192,132,252,.05);border:1px solid rgba(192,132,252,.15);border-radius:var(--radius-sm);padding:14px 18px;font-size:11px;color:var(--accent1);line-height:1.8;margin-bottom:24px;}
+.fields-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:16px;}
+.field{display:flex;flex-direction:column;gap:8px;}
+.field label{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--text-dim);}
+.field input{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);padding:13px 16px;font-family:'DM Mono',monospace;font-size:14px;font-weight:500;outline:none;transition:all .2s;width:100%;}
+.field input:focus{border-color:var(--accent1);background:rgba(192,132,252,.05);box-shadow:0 0 0 3px rgba(192,132,252,.1);}
+.field input::placeholder{color:var(--text-dim);}
+.field .hint{font-size:10px;color:var(--text-dim);}
 
-.formula {
-  background: rgba(0,255,136,0.05);
-  border: 1px solid rgba(0,255,136,0.15);
-  border-radius: 3px;
-  padding: 10px 14px;
-  font-size: 11px;
-  color: #00cc66;
-  margin-bottom: 18px;
-  line-height: 1.7;
-}
+/* TESTS */
+.tests-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.toggle-btns{display:flex;gap:8px;}
+.toggle-btn{background:transparent;border:1px solid var(--border);border-radius:20px;padding:5px 14px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--text-dim);cursor:pointer;transition:all .2s;}
+.toggle-btn:hover{border-color:var(--border-bright);color:var(--text-muted);}
+.tests-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:10px;}
+.test-chip{display:flex;align-items:center;gap:10px;padding:13px 16px;background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;transition:all .2s;font-family:'DM Mono',monospace;font-size:12px;font-weight:500;color:var(--text-dim);user-select:none;}
+.test-chip:hover{border-color:var(--border-bright);color:var(--text-muted);}
+.test-chip.on{background:rgba(129,140,248,.08);border-color:var(--info);color:var(--text);}
+.pip{width:6px;height:6px;border-radius:50%;border:1px solid var(--text-dim);flex-shrink:0;transition:all .2s;}
+.test-chip.on .pip{background:var(--info);border-color:var(--info);}
 
-.irow { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
+/* ACTIONS */
+.actions{display:flex;gap:12px;margin-top:4px;}
+.btn-run{padding:16px 40px;background:linear-gradient(135deg,var(--accent1),var(--accent3));border:none;border-radius:var(--radius-sm);font-family:'DM Mono',monospace;font-size:13px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:#fff;cursor:pointer;box-shadow:0 4px 24px rgba(192,132,252,.3);transition:all .25s;position:relative;overflow:hidden;}
+.btn-run:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(192,132,252,.45);}
+.btn-run:active{transform:translateY(0);}
+.btn-reset{padding:16px 28px;background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Mono',monospace;font-size:13px;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);cursor:pointer;transition:all .2s;}
+.btn-reset:hover{border-color:var(--border-bright);color:var(--text-muted);}
 
-.field { display: flex; flex-direction: column; gap: 6px; }
-.field label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #555; }
-.field input {
-  background: #0d0d0d;
-  border: 1px solid #2a2a2a;
-  border-radius: 3px;
-  color: #e0e0e0;
-  padding: 11px 14px;
-  font-family: inherit;
-  font-size: 15px;
-  font-weight: bold;
-  outline: none;
-  width: 100%;
-}
-.field input:focus { border-color: #00ff88; }
-.field small { font-size: 10px; color: #444; }
+/* RESULTS */
+#results{display:none;margin-top:60px;}
+.results-title{font-family:'DM Serif Display',serif;font-size:32px;background:linear-gradient(90deg,var(--text),var(--text-muted));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:28px;}
+.stat-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:32px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:20px 16px;text-align:center;}
+.stat-val{font-size:28px;font-weight:500;line-height:1;margin-bottom:8px;}
+.stat-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);}
+.c-violet{color:var(--accent1);} .c-cyan{color:var(--accent2);} .c-green{color:var(--pass);} .c-red{color:var(--fail);} .c-white{color:var(--text);}
 
-.crow { display: flex; gap: 8px; margin-bottom: 12px; }
-.cgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(185px, 1fr)); gap: 8px; }
-.cbtn {
-  display: flex; align-items: center; gap: 8px;
-  padding: 12px 14px;
-  background: #0d0d0d;
-  border: 1px solid #2a2a2a;
-  border-radius: 3px;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: bold;
-  color: #666;
-  transition: all 0.15s;
-  user-select: none;
-}
-.cbtn:hover { border-color: #7c6fff; color: #aaa; }
-.cbtn.on { background: rgba(124,111,255,0.08); border-color: #7c6fff; color: #7c6fff; }
-.cbtn .dot { width: 7px; height: 7px; border-radius: 50%; border: 1px solid #444; flex-shrink: 0; transition: all 0.15s; }
-.cbtn.on .dot { background: #7c6fff; border-color: #7c6fff; }
+.result-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;overflow:hidden;transition:border-color .2s;}
+.result-block:hover{border-color:rgba(255,255,255,.11);}
+.result-head{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;cursor:pointer;transition:background .15s;}
+.result-head:hover{background:rgba(255,255,255,.02);}
+.rh-left{display:flex;align-items:center;gap:14px;}
+.r-icon{font-size:16px;} .r-name{font-size:13px;font-weight:500;}
+.badge{padding:4px 14px;border-radius:20px;font-size:9px;font-weight:500;letter-spacing:2px;text-transform:uppercase;}
+.b-pass{background:rgba(74,222,128,.1);color:var(--pass);border:1px solid rgba(74,222,128,.25);}
+.b-fail{background:rgba(251,113,133,.1);color:var(--fail);border:1px solid rgba(251,113,133,.25);}
+.b-info{background:rgba(129,140,248,.1);color:var(--info);border:1px solid rgba(129,140,248,.25);}
+.result-body{display:none;padding:0 24px 24px;border-top:1px solid var(--border);}
+.result-body.open{display:block;padding-top:20px;}
 
-.abrow { display: flex; gap: 10px; margin-top: 4px; }
-.abtn {
-  padding: 13px 28px;
-  border: none;
-  border-radius: 3px;
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: bold;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.abtn-p { background: #00ff88; color: #0d0d0d; }
-.abtn-p:hover { background: #fff; }
-.abtn-s { background: transparent; color: #444; border: 1px solid #2a2a2a; }
-.abtn-s:hover { color: #888; border-color: #555; }
+.vline{padding:10px 16px;border-radius:8px;font-size:11px;line-height:1.6;margin-bottom:18px;}
+.vp{background:rgba(74,222,128,.07);color:var(--pass);border-left:3px solid var(--pass);}
+.vf{background:rgba(251,113,133,.07);color:var(--fail);border-left:3px solid var(--fail);}
+.vw{background:rgba(251,191,36,.07);color:#fbbf24;border-left:3px solid #fbbf24;}
+.kv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:0 24px;margin-bottom:16px;}
+.kv-row{display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.03);font-size:11px;gap:8px;}
+.kk{color:var(--text-dim);} .kv{color:var(--text-muted);font-weight:500;text-align:right;}
+.tbl-title{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--text-dim);margin:18px 0 10px;}
+.tscroll{overflow-x:auto;border-radius:8px;border:1px solid var(--border);}
+table{width:100%;border-collapse:collapse;font-size:11px;min-width:300px;}
+thead th{text-align:left;padding:9px 12px;background:rgba(255,255,255,.02);color:var(--text-dim);font-size:9px;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap;}
+tbody td{padding:7px 12px;border-bottom:1px solid rgba(255,255,255,.025);color:var(--text-muted);white-space:nowrap;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:rgba(255,255,255,.015);}
+.tg{color:var(--pass)!important;font-weight:500;} .tv{color:var(--accent1)!important;font-weight:500;} .tr{color:var(--fail)!important;} .tc{color:var(--accent2)!important;font-weight:500;}
+.tbl-note{font-size:10px;color:var(--text-dim);margin-top:8px;}
+.err-box{background:rgba(251,113,133,.07);border:1px solid rgba(251,113,133,.25);color:var(--fail);padding:16px 20px;border-radius:var(--radius-sm);font-size:12px;margin-top:12px;line-height:1.6;}
 
-#results { display: none; margin-top: 40px; }
-.rtag { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: #00ff88; display: block; margin-bottom: 18px; }
-
-.strip { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; margin-bottom: 24px; }
-.sbox { background: #161616; border: 1px solid #2a2a2a; border-radius: 3px; padding: 14px; text-align: center; }
-.sbox .sv { font-size: 20px; font-weight: bold; line-height: 1; }
-.sbox .sl { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #444; margin-top: 5px; }
-.gc { color: #00ff88; } .rc { color: #ff3e6c; } .bc { color: #7c6fff; } .wc { color: #e0e0e0; }
-
-.rblock { background: #161616; border: 1px solid #2a2a2a; border-radius: 4px; margin-bottom: 10px; }
-.rhead {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 14px 18px; cursor: pointer;
-}
-.rhead:hover { background: rgba(255,255,255,0.02); }
-.rhead .rname { font-size: 14px; font-weight: bold; }
-.badge { padding: 3px 12px; border-radius: 20px; font-size: 9px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; }
-.pass-b { background: rgba(0,255,136,0.1); color: #00ff88; border: 1px solid rgba(0,255,136,0.3); }
-.fail-b { background: rgba(255,62,108,0.1); color: #ff3e6c; border: 1px solid rgba(255,62,108,0.3); }
-.info-b { background: rgba(124,111,255,0.1); color: #7c6fff; border: 1px solid rgba(124,111,255,0.3); }
-
-.rbody { display: none; padding: 18px; border-top: 1px solid #2a2a2a; }
-.rbody.open { display: block; }
-
-.kv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 0 20px; margin-bottom: 14px; }
-.kv { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 11px; gap: 8px; }
-.kv .k { color: #555; } .kv .v { color: #ccc; font-weight: bold; text-align: right; }
-
-.vline { font-size: 11px; padding: 9px 13px; border-radius: 2px; margin-bottom: 14px; }
-.vline.vp { background: rgba(0,255,136,0.07); color: #00ff88; border-left: 3px solid #00ff88; }
-.vline.vf { background: rgba(255,62,108,0.07); color: #ff3e6c; border-left: 3px solid #ff3e6c; }
-
-.tit { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #444; margin: 14px 0 6px; }
-
-.tscroll { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 320px; }
-thead th { text-align: left; padding: 7px 10px; background: rgba(255,255,255,0.03); color: #555; font-size: 9px; letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px solid #2a2a2a; white-space: nowrap; }
-tbody td { padding: 6px 10px; border-bottom: 1px solid rgba(255,255,255,0.03); color: #ccc; white-space: nowrap; }
-tbody tr:hover td { background: rgba(255,255,255,0.02); }
-
-.tg { color: #00ff88 !important; font-weight: bold; }
-.tb { color: #7c6fff !important; font-weight: bold; }
-.tr { color: #ff3e6c !important; }
-
-.tnote { font-size: 10px; color: #444; margin-top: 5px; }
-.errbox { background: rgba(255,62,108,0.08); border: 1px solid rgba(255,62,108,0.3); color: #ff3e6c; padding: 12px 16px; border-radius: 3px; font-size: 11px; margin-top: 14px; }
-
-@media(max-width:520px) {
-  .mrow { grid-template-columns: 1fr; }
-  .irow { grid-template-columns: 1fr; }
-  h1 { font-size: 30px; }
-}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+@media(max-width:600px){.method-grid{grid-template-columns:1fr;}.fields-row{grid-template-columns:1fr;}.stat-strip{grid-template-columns:repeat(2,1fr);}.header h1{font-size:48px;}}
 </style>
 </head>
 <body>
+<div class="cosmos"></div>
 <div class="page">
 
-<h1>SEMILLAS</h1>
-<p class="sub">// generador pseudoaleatorio &amp; validador estadístico</p>
+  <header class="header">
+    <span class="eyebrow">generador pseudoaleatorio &amp; validador estadístico</span>
+    <h1>Semillas</h1>
+    <p class="header-sub">Genera secuencias de números pseudoaleatorios y valídalas con pruebas estadísticas clásicas.</p>
+  </header>
 
-<!-- 01 MÉTODO -->
-<div class="sec">
-  <div class="sec-title">01 — Método de generación</div>
-  <div class="mrow">
-    <button class="mbtn" id="btn_mult" onclick="selectMethod('mult')">
-      Multiplicativo
-      <small>α × β → 8 dígitos → centro → rᵢ = 0.Centro</small>
-    </button>
-    <button class="mbtn" id="btn_cuad" onclick="selectMethod('cuad')">
-      Cuadrados Medios
-      <small>X² → pad 2d → centro → rᵢ = X/10ᵈ</small>
-    </button>
-    <button class="mbtn" id="btn_clin" onclick="selectMethod('clin')">
-      Congruencial Lineal
-      <small>Xₙ₊₁ = (a·Xₙ + c) mod m → rᵢ = Xₙ₊₁/m</small>
-    </button>
-    <button class="mbtn" id="btn_cmul" onclick="selectMethod('cmul')">
-      Congruencial Multiplicativo
-      <small>Xₙ₊₁ = (a·Xₙ) mod m → rᵢ = Xₙ₊₁/m</small>
-    </button>
-  </div>
+  <!-- 01 MÉTODO -->
+  <div class="card">
+    <div class="sec-label">01 — Método de generación</div>
+    <div class="method-grid">
+      <button class="method-btn" id="btn_mult" onclick="selectMethod('mult')">
+        <span class="btn-tag">activo</span>
+        <span class="btn-name">Multiplicativo</span>
+        <span class="btn-desc">α × β → 8 dígitos → centro → rᵢ = 0.Centro</span>
+      </button>
+      <button class="method-btn" id="btn_cuad" onclick="selectMethod('cuad')">
+        <span class="btn-tag">activo</span>
+        <span class="btn-name">Cuadrados Medios</span>
+        <span class="btn-desc">X² → pad 2d → centro → rᵢ = Xᵢ / 10ᵈ</span>
+      </button>
+      <button class="method-btn" id="btn_clin" onclick="selectMethod('clin')">
+        <span class="btn-tag">activo</span>
+        <span class="btn-name">Congruencial Lineal</span>
+        <span class="btn-desc">Xₙ₊₁ = (a·Xₙ + c) mod m → rᵢ = Xₙ₊₁ / m</span>
+      </button>
+      <button class="method-btn" id="btn_cmul" onclick="selectMethod('cmul')">
+        <span class="btn-tag">activo</span>
+        <span class="btn-name">Congruencial Multiplicativo</span>
+        <span class="btn-desc">Xₙ₊₁ = (a·Xₙ) mod m → rᵢ = Xₙ₊₁ / m</span>
+      </button>
+    </div>
 
-  <!-- Panel Multiplicativo -->
-  <div class="panel" id="panel_mult">
-    <div class="formula">
-      α × β &nbsp;→&nbsp; completar a 8 dígitos &nbsp;→&nbsp; Centro = posiciones [3,4,5,6] &nbsp;→&nbsp; rᵢ = 0.Centro &nbsp;→&nbsp; βᵢ₊₁ = Centro
-    </div>
-    <div class="irow">
-      <div class="field">
-        <label>α — semilla fija</label>
-        <input type="number" id="in_alpha" placeholder="Ej: 5625" min="1">
-        <small>No cambia nunca</small>
-      </div>
-      <div class="field">
-        <label>β₀ — semilla inicial</label>
-        <input type="number" id="in_beta" placeholder="Ej: 7531" min="1">
-        <small>βᵢ₊₁ = Centro</small>
-      </div>
-      <div class="field">
-        <label>N válidos</label>
-        <input type="number" id="in_nm" value="50" min="1">
-        <small>Cuántos rᵢ necesitas</small>
+    <div class="panel" id="panel_mult">
+      <div class="formula-box">α × β → completar 8 dígitos → Centro = pos [3,4,5,6] → rᵢ = 0.Centro → βᵢ₊₁ = Centro</div>
+      <div class="fields-row">
+        <div class="field"><label>α — semilla fija</label><input type="number" id="in_alpha" placeholder="Ej: 5625" min="1"><span class="hint">No cambia nunca</span></div>
+        <div class="field"><label>β₀ — semilla inicial</label><input type="number" id="in_beta" placeholder="Ej: 7531" min="1"><span class="hint">βᵢ₊₁ = Centro</span></div>
+        <div class="field"><label>N válidos</label><input type="number" id="in_nm" value="50" min="1"><span class="hint">Cuántos rᵢ necesitas</span></div>
       </div>
     </div>
-  </div>
 
-  <!-- Panel Cuadrados Medios -->
-  <div class="panel" id="panel_cuad">
-    <div class="formula">
-      X₀ &nbsp;→&nbsp; X² &nbsp;→&nbsp; completar a 2d dígitos &nbsp;→&nbsp; extraer d dígitos centrales &nbsp;→&nbsp; rᵢ = Xᵢ/10ᵈ &nbsp;→&nbsp; Xᵢ₊₁ = Centro
-    </div>
-    <div class="irow">
-      <div class="field">
-        <label>X₀ — semilla</label>
-        <input type="number" id="in_x0" placeholder="Ej: 7531" min="1">
-        <small>Valor inicial</small>
-      </div>
-      <div class="field">
-        <label>d — dígitos</label>
-        <input type="number" id="in_d" value="4" min="2" max="8">
-        <small>Entre 2 y 8</small>
-      </div>
-      <div class="field">
-        <label>N válidos</label>
-        <input type="number" id="in_nc" value="50" min="1">
-        <small>Cuántos rᵢ necesitas</small>
+    <div class="panel" id="panel_cuad">
+      <div class="formula-box">X₀ → X² → completar 2d dígitos → extraer d dígitos centrales → rᵢ = Xᵢ/10ᵈ → Xᵢ₊₁ = Centro</div>
+      <div class="fields-row">
+        <div class="field"><label>X₀ — semilla</label><input type="number" id="in_x0" placeholder="Ej: 7531" min="1"><span class="hint">Valor inicial</span></div>
+        <div class="field"><label>d — dígitos</label><input type="number" id="in_d" value="4" min="2" max="8"><span class="hint">Entre 2 y 8</span></div>
+        <div class="field"><label>N válidos</label><input type="number" id="in_nc" value="50" min="1"><span class="hint">Cuántos rᵢ necesitas</span></div>
       </div>
     </div>
-  </div>
 
-  <!-- Panel Congruencial Lineal -->
-  <div class="panel" id="panel_clin">
-    <div class="formula">
-      Xₙ₊₁ = (a · Xₙ + c) mod m &nbsp;→&nbsp; rᵢ = Xₙ₊₁ / m<br>
-      Condiciones de Hull-Dobell: mcd(c,m)=1 &nbsp;|&nbsp; a≡1(mod p) para todo primo p|m &nbsp;|&nbsp; si 4|m entonces 4|(a-1)
+    <div class="panel" id="panel_clin">
+      <div class="formula-box">Xₙ₊₁ = (a · Xₙ + c) mod m → rᵢ = Xₙ₊₁ / m<br>Hull-Dobell: mcd(c,m)=1 | a≡1(mod p) para todo primo p|m</div>
+      <div class="fields-row">
+        <div class="field"><label>X₀ — semilla</label><input type="number" id="in_cl_x0" placeholder="Ej: 7" min="0"><span class="hint">Valor inicial ≥ 0</span></div>
+        <div class="field"><label>a — multiplicador</label><input type="number" id="in_cl_a" placeholder="Ej: 1664525" min="1"><span class="hint">Factor a</span></div>
+        <div class="field"><label>c — incremento</label><input type="number" id="in_cl_c" placeholder="Ej: 1013904223" min="0"><span class="hint">c ≥ 0</span></div>
+        <div class="field"><label>m — módulo</label><input type="number" id="in_cl_m" placeholder="Ej: 2147483648" min="2"><span class="hint">m > 1</span></div>
+        <div class="field"><label>N válidos</label><input type="number" id="in_cl_n" value="50" min="1"><span class="hint">Cuántos rᵢ necesitas</span></div>
+      </div>
     </div>
-    <div class="irow">
-      <div class="field">
-        <label>X₀ — semilla</label>
-        <input type="number" id="in_cl_x0" placeholder="Ej: 7" min="0">
-        <small>Valor inicial (≥ 0)</small>
-      </div>
-      <div class="field">
-        <label>a — multiplicador</label>
-        <input type="number" id="in_cl_a" placeholder="Ej: 1664525" min="1">
-        <small>Factor a</small>
-      </div>
-      <div class="field">
-        <label>c — incremento</label>
-        <input type="number" id="in_cl_c" placeholder="Ej: 1013904223" min="0">
-        <small>c ≥ 0</small>
-      </div>
-      <div class="field">
-        <label>m — módulo</label>
-        <input type="number" id="in_cl_m" placeholder="Ej: 2147483648" min="2">
-        <small>m > 0</small>
-      </div>
-      <div class="field">
-        <label>N válidos</label>
-        <input type="number" id="in_cl_n" value="50" min="1">
-        <small>Cuántos rᵢ necesitas</small>
+
+    <div class="panel" id="panel_cmul">
+      <div class="formula-box">Xₙ₊₁ = (a · Xₙ) mod m → rᵢ = Xₙ₊₁ / m<br>Requiere: X₀ impar, m = 2ᵏ, a ≡ 3 ó 5 (mod 8)</div>
+      <div class="fields-row">
+        <div class="field"><label>X₀ — semilla (impar)</label><input type="number" id="in_cm_x0" placeholder="Ej: 7531" min="1"><span class="hint">Debe ser impar</span></div>
+        <div class="field"><label>a — multiplicador</label><input type="number" id="in_cm_a" placeholder="Ej: 1229" min="1"><span class="hint">a ≡ 3 ó 5 (mod 8)</span></div>
+        <div class="field"><label>m — módulo</label><input type="number" id="in_cm_m" placeholder="Ej: 65536" min="2"><span class="hint">Potencia de 2</span></div>
+        <div class="field"><label>N válidos</label><input type="number" id="in_cm_n" value="50" min="1"><span class="hint">Cuántos rᵢ necesitas</span></div>
       </div>
     </div>
   </div>
 
-  <!-- Panel Congruencial Multiplicativo -->
-  <div class="panel" id="panel_cmul">
-    <div class="formula">
-      Xₙ₊₁ = (a · Xₙ) mod m &nbsp;→&nbsp; rᵢ = Xₙ₊₁ / m<br>
-      Requiere: X₀ impar, m = 2ᵏ (potencia de 2), a ≡ 3 o 5 (mod 8)
-    </div>
-    <div class="irow">
-      <div class="field">
-        <label>X₀ — semilla (impar)</label>
-        <input type="number" id="in_cm_x0" placeholder="Ej: 7531" min="1">
-        <small>Debe ser impar</small>
-      </div>
-      <div class="field">
-        <label>a — multiplicador</label>
-        <input type="number" id="in_cm_a" placeholder="Ej: 1229" min="1">
-        <small>a ≡ 3 ó 5 (mod 8)</small>
-      </div>
-      <div class="field">
-        <label>m — módulo</label>
-        <input type="number" id="in_cm_m" placeholder="Ej: 65536" min="2">
-        <small>Potencia de 2</small>
-      </div>
-      <div class="field">
-        <label>N válidos</label>
-        <input type="number" id="in_cm_n" value="50" min="1">
-        <small>Cuántos rᵢ necesitas</small>
+  <!-- 02 PRUEBAS -->
+  <div class="card">
+    <div class="tests-header">
+      <div class="sec-label" style="margin-bottom:0;flex:1;">02 — Pruebas de validación</div>
+      <div class="toggle-btns">
+        <button class="toggle-btn" onclick="toggleAll(true)">Todas</button>
+        <button class="toggle-btn" onclick="toggleAll(false)">Ninguna</button>
       </div>
     </div>
+    <div class="tests-grid">
+      <div class="test-chip" id="cb_med" onclick="toggleTest(this)"><span class="pip"></span>Medias</div>
+      <div class="test-chip" id="cb_var" onclick="toggleTest(this)"><span class="pip"></span>Varianza</div>
+      <div class="test-chip" id="cb_chi" onclick="toggleTest(this)"><span class="pip"></span>Chi Cuadrada</div>
+      <div class="test-chip" id="cb_ks"  onclick="toggleTest(this)"><span class="pip"></span>Kolmogórov-Smirnov</div>
+      <div class="test-chip" id="cb_aa"  onclick="toggleTest(this)"><span class="pip"></span>Arriba y Abajo</div>
+      <div class="test-chip" id="cb_pk"  onclick="toggleTest(this)"><span class="pip"></span>Póker</div>
+      <div class="test-chip" id="cb_mc"  onclick="toggleTest(this)"><span class="pip"></span>Monte Carlo π</div>
+    </div>
   </div>
-</div>
 
-<!-- 02 PRUEBAS -->
-<div class="sec purple">
-  <div class="sec-title">02 — Pruebas de validación</div>
-  <div class="crow">
-    <button class="abtn abtn-s" style="padding:6px 12px;font-size:10px;" onclick="toggleAll(true)">Todas</button>
-    <button class="abtn abtn-s" style="padding:6px 12px;font-size:10px;" onclick="toggleAll(false)">Ninguna</button>
+  <div class="actions">
+    <button class="btn-run" onclick="run()">▶ Ejecutar</button>
+    <button class="btn-reset" onclick="resetApp()">↺ Reiniciar</button>
   </div>
-  <div class="cgrid">
-    <div class="cbtn" id="cb_med" onclick="toggleTest(this)"><span class="dot"></span>Medias</div>
-    <div class="cbtn" id="cb_var" onclick="toggleTest(this)"><span class="dot"></span>Varianza</div>
-    <div class="cbtn" id="cb_chi" onclick="toggleTest(this)"><span class="dot"></span>Chi Cuadrada</div>
-    <div class="cbtn" id="cb_ks"  onclick="toggleTest(this)"><span class="dot"></span>Kolmogórov-Smirnov</div>
-    <div class="cbtn" id="cb_aa"  onclick="toggleTest(this)"><span class="dot"></span>Arriba y Abajo</div>
-    <div class="cbtn" id="cb_pk"  onclick="toggleTest(this)"><span class="dot"></span>Póker</div>
-    <div class="cbtn" id="cb_mc"  onclick="toggleTest(this)"><span class="dot"></span>Monte Carlo π</div>
+
+  <div id="results">
+    <h2 class="results-title">Resultados</h2>
+    <div class="stat-strip" id="strip"></div>
+    <div id="blocks"></div>
   </div>
-</div>
-
-<div class="abrow">
-  <button class="abtn abtn-p" onclick="run()">▶ Ejecutar</button>
-  <button class="abtn abtn-s" onclick="resetApp()">↺ Reiniciar</button>
-</div>
-
-<!-- RESULTS -->
-<div id="results">
-  <span class="rtag">— Resultados —</span>
-  <div class="strip" id="strip"></div>
-  <div id="blocks"></div>
-</div>
 
 </div>
 
 <script>
-var currentMethod = null;
-
-function el(id) { return document.getElementById(id); }
-
-function selectMethod(m) {
-  currentMethod = m;
-  var all = ['mult','cuad','clin','cmul'];
-  for (var i = 0; i < all.length; i++) {
-    el('btn_' + all[i]).className = 'mbtn' + (m === all[i] ? ' active' : '');
-    el('panel_' + all[i]).style.display = m === all[i] ? 'block' : 'none';
-  }
+var currentMethod=null;
+function el(id){return document.getElementById(id);}
+function selectMethod(m){
+  currentMethod=m;
+  ['mult','cuad','clin','cmul'].forEach(function(k){
+    el('btn_'+k).className='method-btn'+(m===k?' active':'');
+    el('panel_'+k).style.display=m===k?'block':'none';
+  });
 }
+function toggleTest(btn){btn.classList.toggle('on');}
+function toggleAll(on){document.querySelectorAll('.test-chip').forEach(function(b){on?b.classList.add('on'):b.classList.remove('on');});}
+function isOn(id){return el(id)&&el(id).classList.contains('on');}
+function tog(head){head.nextElementSibling.classList.toggle('open');}
 
-function toggleTest(btn) { btn.classList.toggle('on'); }
-
-function toggleAll(on) {
-  var btns = document.querySelectorAll('.cbtn');
-  for (var i = 0; i < btns.length; i++) {
-    if (on) btns[i].classList.add('on');
-    else btns[i].classList.remove('on');
+// ── GENERADORES ──
+function genMult(alpha,beta0,maxN){
+  var rows=[],seen={},beta=beta0;
+  for(var i=0;i<maxN;i++){
+    var prod=alpha*beta,raw=''+prod;
+    while(raw.length<8)raw='0'+raw;
+    if(raw.length>8)raw=raw.slice(raw.length-8);
+    var centro=raw.slice(2,6),cn=parseInt(centro,10),ri=cn/10000;
+    if(cn===0||seen[cn])break;
+    seen[cn]=1;
+    rows.push({i:rows.length+1,alpha:alpha,beta:beta,prod:prod,s8:raw,centro:centro,ri:ri});
+    beta=cn;
   }
+  return rows;
 }
-
-function isOn(id) { return el(id) && el(id).classList.contains('on'); }
-function tog(head) { head.nextElementSibling.classList.toggle('open'); }
-
-// ── GENERADORES (bug corregido: verificar ANTES de agregar) ──────────────
-
-function genMult(alpha, beta0, maxN) {
-  var rows = [], seen = {}, beta = beta0;
-  for (var i = 0; i < maxN; i++) {
-    var prod = alpha * beta;
-    var raw = '' + prod;
-    while (raw.length < 8) raw = '0' + raw;
-    if (raw.length > 8) raw = raw.slice(raw.length - 8);
-    var centro = raw.slice(2, 6);
-    var cn = parseInt(centro, 10);
-    var ri = cn / 10000;
-    // ✓ FIX: verificar repetición ANTES de agregar
-    if (cn === 0 || seen[cn]) break;
-    seen[cn] = 1;
-    rows.push({ i: rows.length+1, alpha: alpha, beta: beta, prod: prod, s8: raw, centro: centro, ri: ri });
-    beta = cn;
+function genCuad(x0,d,maxN){
+  var rows=[],seen={},x=x0,mod=Math.pow(10,d),pad=d*2;
+  for(var i=0;i<maxN;i++){
+    var sq=x*x,raw=''+sq;
+    while(raw.length<pad)raw='0'+raw;
+    if(raw.length>pad)raw=raw.slice(raw.length-pad);
+    var start=Math.floor((pad-d)/2),centro=raw.slice(start,start+d);
+    var cn=parseInt(centro,10),ri=cn/mod;
+    if(cn===0||seen[cn])break;
+    seen[cn]=1;
+    rows.push({i:rows.length+1,xp:x,sq:sq,s2d:raw,centro:centro,xi:cn,ri:ri});
+    x=cn;
+  }
+  return rows;
+}
+function genCongruencialLineal(x0,a,c,m,maxN){
+  var rows=[],seen={},x=x0;
+  for(var i=0;i<maxN;i++){
+    var xn=(a*x+c)%m,ri=xn/m;
+    if(seen[xn])break;
+    seen[xn]=1;
+    rows.push({i:rows.length+1,xn_prev:x,'a·Xₙ+c':a*x+c,'mod m':xn,ri:ri});
+    x=xn;
+  }
+  return rows;
+}
+function genCongruencialMult(x0,a,m,maxN){
+  var rows=[],seen={},x=x0;
+  for(var i=0;i<maxN;i++){
+    var xn=(a*x)%m,ri=xn/m;
+    if(xn===0||seen[xn])break;
+    seen[xn]=1;
+    rows.push({i:rows.length+1,xn_prev:x,'a·Xₙ':a*x,'mod m':xn,ri:ri});
+    x=xn;
   }
   return rows;
 }
 
-function genCuad(x0, d, maxN) {
-  var rows = [], seen = {}, x = x0;
-  var mod = Math.pow(10, d), pad = d * 2;
-  for (var i = 0; i < maxN; i++) {
-    var sq = x * x;
-    var raw = '' + sq;
-    while (raw.length < pad) raw = '0' + raw;
-    if (raw.length > pad) raw = raw.slice(raw.length - pad);
-    var start = Math.floor((pad - d) / 2);
-    var centro = raw.slice(start, start + d);
-    var cn = parseInt(centro, 10);
-    var ri = cn / mod;
-    // ✓ FIX: verificar repetición ANTES de agregar
-    if (cn === 0 || seen[cn]) break;
-    seen[cn] = 1;
-    rows.push({ i: rows.length+1, xp: x, sq: sq, s2d: raw, centro: centro, xi: cn, ri: ri });
-    x = cn;
-  }
-  return rows;
+// ── PRUEBAS ──
+function testMedias(nums){
+  var n=nums.length,sum=0,i;
+  for(i=0;i<n;i++)sum+=nums[i];
+  var mean=sum/n,lo=0.5-1.96/Math.sqrt(12*n),hi=0.5+1.96/Math.sqrt(12*n),pass=mean>=lo&&mean<=hi,cs=0,rows=[];
+  for(i=0;i<Math.min(n,300);i++){cs+=nums[i];rows.push({'i':i+1,'rᵢ':nums[i].toFixed(6),'Σrᵢ':cs.toFixed(6),'X̄ acum.':(cs/(i+1)).toFixed(6)});}
+  return{pass,det:{'N':n,'Σrᵢ':sum.toFixed(6),'X̄':mean.toFixed(6),'Z α/2':'1.96','Lím. inf.':lo.toFixed(6),'Lím. sup.':hi.toFixed(6)},
+    verd:'X̄ = '+mean.toFixed(6)+(pass?' ∈ ':' ∉ ')+'['+lo.toFixed(6)+', '+hi.toFixed(6)+']  →  '+(pass?'PASA ✓':'FALLA ✗'),rows,note:n>300?'Mostrando 300 de '+n:''};
 }
-
-function genCongruencialLineal(x0, a, c, m, maxN) {
-  var rows = [], seen = {}, x = x0;
-  for (var i = 0; i < maxN; i++) {
-    var xn = (a * x + c) % m;
-    var ri = xn / m;
-    // verificar repetición ANTES de agregar
-    if (seen[xn]) break;
-    seen[xn] = 1;
-    rows.push({ i: rows.length+1, xn_prev: x, 'a·Xₙ+c': a*x+c, 'mod m': xn, ri: ri });
-    x = xn;
-  }
-  return rows;
+function testVarianza(nums){
+  var n=nums.length,sum=0,i;
+  for(i=0;i<n;i++)sum+=nums[i];
+  var mean=sum/n,ssq=0;
+  for(i=0;i<n;i++)ssq+=(nums[i]-mean)*(nums[i]-mean);
+  var s2=ssq/(n-1),clo=chi025(n-1),chi=chiCrit(n-1),lo=clo/(12*(n-1)),hi=chi/(12*(n-1)),pass=s2>=lo&&s2<=hi,cs=0,rows=[];
+  for(i=0;i<Math.min(n,300);i++){var d=nums[i]-mean;cs+=d*d;rows.push({'i':i+1,'rᵢ':nums[i].toFixed(6),'rᵢ−X̄':d.toFixed(6),'(rᵢ−X̄)²':(d*d).toFixed(8),'Σ(rᵢ−X̄)²':cs.toFixed(8)});}
+  return{pass,det:{'N':n,'X̄':mean.toFixed(6),'S²':s2.toFixed(8),'1/12':(1/12).toFixed(8),'χ²₀.₀₂₅':clo.toFixed(4),'χ²₀.₉₇₅':chi.toFixed(4),'Lím. inf.':lo.toFixed(8),'Lím. sup.':hi.toFixed(8)},
+    verd:'S² = '+s2.toFixed(6)+(pass?' ∈ ':' ∉ ')+'['+lo.toFixed(6)+', '+hi.toFixed(6)+']  →  '+(pass?'PASA ✓':'FALLA ✗'),rows,note:n>300?'Mostrando 300 de '+n:''};
 }
-
-function genCongruencialMult(x0, a, m, maxN) {
-  var rows = [], seen = {}, x = x0;
-  for (var i = 0; i < maxN; i++) {
-    var xn = (a * x) % m;
-    var ri = xn / m;
-    // verificar repetición ANTES de agregar
-    if (xn === 0 || seen[xn]) break;
-    seen[xn] = 1;
-    rows.push({ i: rows.length+1, xn_prev: x, 'a·Xₙ': a*x, 'mod m': xn, ri: ri });
-    x = xn;
-  }
-  return rows;
+function testChi(nums){
+  var k=10,n=nums.length,e=n/k,i,obs=[0,0,0,0,0,0,0,0,0,0];
+  for(i=0;i<n;i++){var b=Math.floor(nums[i]*k);if(b>=k)b=k-1;obs[b]++;}
+  var chi2=0,rows=[];
+  for(i=0;i<k;i++){var o=obs[i],c=(o-e)*(o-e)/e;chi2+=c;rows.push({'Intervalo':'['+(i/k).toFixed(1)+', '+((i+1)/k).toFixed(1)+')','Oᵢ':o,'Eᵢ':e.toFixed(4),'Oᵢ−Eᵢ':(o-e).toFixed(4),'(Oᵢ−Eᵢ)²/Eᵢ':c.toFixed(6)});}
+  var df=k-1,crit=chiCrit(df),pass=chi2<=crit;
+  return{pass,det:{'N':n,'k':k,'Eᵢ':e.toFixed(4),'χ² calc.':chi2.toFixed(6),'gl':df,'χ² crít.':crit.toFixed(4)},
+    verd:'χ² = '+chi2.toFixed(4)+(pass?' ≤ ':' > ')+crit.toFixed(4)+' (gl='+df+')  →  '+(pass?'PASA ✓':'FALLA ✗'),rows,note:''};
 }
-
-// ── PRUEBAS ESTADÍSTICAS ─────────────────────────────────────────────────
-
-function testMedias(nums) {
-  var n = nums.length, sum = 0, i;
-  for (i = 0; i < n; i++) sum += nums[i];
-  var mean = sum / n;
-  var lo = 0.5 - 1.96 / Math.sqrt(12 * n);
-  var hi = 0.5 + 1.96 / Math.sqrt(12 * n);
-  var pass = mean >= lo && mean <= hi;
-  var cs = 0, rows = [];
-  for (i = 0; i < Math.min(n, 300); i++) {
-    cs += nums[i];
-    rows.push({ 'i': i+1, 'rᵢ': nums[i].toFixed(6), 'Σrᵢ': cs.toFixed(6), 'X̄ acum.': (cs/(i+1)).toFixed(6) });
+function testKS(nums){
+  var n=nums.length,i,sorted=nums.slice().sort(function(a,b){return a-b;}),Dmax=0,rows=[];
+  for(i=0;i<n;i++){
+    var Ft=sorted[i],Fe=(i+1)/n,Fp=i/n,d1=Math.abs(Fe-Ft),d2=Math.abs(Fp-Ft),D=d1>d2?d1:d2;
+    if(D>Dmax)Dmax=D;
+    if(i<300)rows.push({'i':i+1,'Xᵢ':sorted[i].toFixed(6),'F(Xᵢ)':Ft.toFixed(6),'i/N':Fe.toFixed(6),'(i-1)/N':Fp.toFixed(6),'|i/N−F|':d1.toFixed(6),'|(i-1)/N−F|':d2.toFixed(6),'Dᵢ':D.toFixed(6)});
   }
-  return {
-    pass: pass,
-    det: { 'N': n, 'Σrᵢ': sum.toFixed(6), 'X̄': mean.toFixed(6), 'Z α/2': '1.96', 'Lím. inf.': lo.toFixed(6), 'Lím. sup.': hi.toFixed(6) },
-    verd: 'X̄ = ' + mean.toFixed(6) + (pass ? ' ∈ ' : ' ∉ ') + '[' + lo.toFixed(6) + ', ' + hi.toFixed(6) + ']  →  ' + (pass ? 'PASA ✓' : 'FALLA ✗'),
-    rows: rows, note: n > 300 ? 'Mostrando 300 de ' + n : ''
-  };
+  var crit=1.36/Math.sqrt(n),pass=Dmax<=crit;
+  return{pass,det:{'N':n,'D máx':Dmax.toFixed(6),'D crít=1.36/√N':crit.toFixed(6)},
+    verd:'D = '+Dmax.toFixed(6)+(pass?' ≤ ':' > ')+crit.toFixed(6)+'  →  '+(pass?'PASA ✓':'FALLA ✗'),rows,note:n>300?'Mostrando 300 de '+n:''};
 }
-
-function testVarianza(nums) {
-  var n = nums.length, sum = 0, i;
-  for (i = 0; i < n; i++) sum += nums[i];
-  var mean = sum / n, ssq = 0;
-  for (i = 0; i < n; i++) ssq += (nums[i] - mean) * (nums[i] - mean);
-  var s2 = ssq / (n - 1);
-  var clo = chi025(n-1), chi = chiCrit(n-1);
-  var lo = clo / (12*(n-1)), hi = chi / (12*(n-1));
-  var pass = s2 >= lo && s2 <= hi;
-  var cs = 0, rows = [];
-  for (i = 0; i < Math.min(n, 300); i++) {
-    var d = nums[i] - mean; cs += d * d;
-    rows.push({ 'i': i+1, 'rᵢ': nums[i].toFixed(6), 'rᵢ−X̄': d.toFixed(6), '(rᵢ−X̄)²': (d*d).toFixed(8), 'Σ(rᵢ−X̄)²': cs.toFixed(8) });
-  }
-  return {
-    pass: pass,
-    det: { 'N': n, 'X̄': mean.toFixed(6), 'S²': s2.toFixed(8), '1/12': (1/12).toFixed(8), 'χ²₀.₀₂₅': clo.toFixed(4), 'χ²₀.₉₇₅': chi.toFixed(4), 'Lím. inf.': lo.toFixed(8), 'Lím. sup.': hi.toFixed(8) },
-    verd: 'S² = ' + s2.toFixed(6) + (pass ? ' ∈ ' : ' ∉ ') + '[' + lo.toFixed(6) + ', ' + hi.toFixed(6) + ']  →  ' + (pass ? 'PASA ✓' : 'FALLA ✗'),
-    rows: rows, note: n > 300 ? 'Mostrando 300 de ' + n : ''
-  };
+function testArriba(nums){
+  var n=nums.length,i,signs=[],cambios={};
+  for(i=0;i<n-1;i++)signs.push(nums[i+1]>nums[i]?'+':'-');
+  var runs=0,cur=null;
+  for(i=0;i<signs.length;i++){if(signs[i]!==cur){runs++;cambios[i+1]=1;cur=signs[i];}}
+  var mu=2*(n-1)/3,sig2=(16*n-29)/90,sig=Math.sqrt(sig2),z=(runs-mu)/sig,pass=Math.abs(z)<=1.96,rows=[];
+  for(i=0;i<Math.min(signs.length,300);i++)rows.push({'i':i+1,'rᵢ':nums[i].toFixed(6),'rᵢ₊₁':nums[i+1].toFixed(6),'Signo':signs[i],'Racha':cambios[i+1]?'★':''});
+  return{pass,det:{'N':n,'Rachas R':runs,'μ':mu.toFixed(4),'σ²':sig2.toFixed(4),'σ':sig.toFixed(4),'Z':z.toFixed(4),'Z crít.':'±1.96'},
+    verd:'|Z| = '+Math.abs(z).toFixed(4)+(pass?' ≤ 1.96  →  PASA ✓':' > 1.96  →  FALLA ✗'),rows,note:n-1>300?'Mostrando 300 de '+(n-1)+' pares':''};
 }
-
-function testChi(nums) {
-  var k = 10, n = nums.length, e = n / k, i;
-  var obs = [0,0,0,0,0,0,0,0,0,0];
-  for (i = 0; i < n; i++) { var b = Math.floor(nums[i] * k); if (b >= k) b = k-1; obs[b]++; }
-  var chi2 = 0, rows = [];
-  for (i = 0; i < k; i++) {
-    var o = obs[i], c = (o-e)*(o-e)/e; chi2 += c;
-    rows.push({ 'Intervalo': '[' + (i/k).toFixed(1) + ', ' + ((i+1)/k).toFixed(1) + ')', 'Oᵢ': o, 'Eᵢ': e.toFixed(4), 'Oᵢ−Eᵢ': (o-e).toFixed(4), '(Oᵢ−Eᵢ)²/Eᵢ': c.toFixed(6) });
-  }
-  var df = k-1, crit = chiCrit(df), pass = chi2 <= crit;
-  return {
-    pass: pass,
-    det: { 'N': n, 'k': k, 'Eᵢ': e.toFixed(4), 'χ² calc.': chi2.toFixed(6), 'gl': df, 'χ² crít.': crit.toFixed(4) },
-    verd: 'χ² = ' + chi2.toFixed(4) + (pass ? ' ≤ ' : ' > ') + crit.toFixed(4) + ' (gl=' + df + ')  →  ' + (pass ? 'PASA ✓' : 'FALLA ✗'),
-    rows: rows, note: ''
-  };
-}
-
-function testKS(nums) {
-  var n = nums.length, i;
-  var sorted = nums.slice().sort(function(a,b){ return a-b; });
-  var Dmax = 0, rows = [];
-  for (i = 0; i < n; i++) {
-    var Ft = sorted[i], Fe = (i+1)/n, Fp = i/n;
-    var d1 = Math.abs(Fe-Ft), d2 = Math.abs(Fp-Ft), D = d1 > d2 ? d1 : d2;
-    if (D > Dmax) Dmax = D;
-    if (i < 300) rows.push({ 'i': i+1, 'Xᵢ': sorted[i].toFixed(6), 'F(Xᵢ)': Ft.toFixed(6), 'i/N': Fe.toFixed(6), '(i-1)/N': Fp.toFixed(6), '|i/N−F|': d1.toFixed(6), '|(i-1)/N−F|': d2.toFixed(6), 'Dᵢ': D.toFixed(6) });
-  }
-  var crit = 1.36 / Math.sqrt(n), pass = Dmax <= crit;
-  return {
-    pass: pass,
-    det: { 'N': n, 'D máx': Dmax.toFixed(6), 'D crít=1.36/√N': crit.toFixed(6) },
-    verd: 'D = ' + Dmax.toFixed(6) + (pass ? ' ≤ ' : ' > ') + crit.toFixed(6) + '  →  ' + (pass ? 'PASA ✓' : 'FALLA ✗'),
-    rows: rows, note: n > 300 ? 'Mostrando 300 de ' + n : ''
-  };
-}
-
-function testArriba(nums) {
-  var n = nums.length, i, signs = [], cambios = {};
-  for (i = 0; i < n-1; i++) signs.push(nums[i+1] > nums[i] ? '+' : '-');
-  var runs = 0, cur = null;
-  for (i = 0; i < signs.length; i++) { if (signs[i] !== cur) { runs++; cambios[i+1] = 1; cur = signs[i]; } }
-  var mu = 2*(n-1)/3, sig2 = (16*n-29)/90, sig = Math.sqrt(sig2);
-  var z = (runs - mu) / sig, pass = Math.abs(z) <= 1.96;
-  var rows = [];
-  for (i = 0; i < Math.min(signs.length, 300); i++) {
-    rows.push({ 'i': i+1, 'rᵢ': nums[i].toFixed(6), 'rᵢ₊₁': nums[i+1].toFixed(6), 'Signo': signs[i], 'Racha': cambios[i+1] ? '★' : '' });
-  }
-  return {
-    pass: pass,
-    det: { 'N': n, 'Rachas R': runs, 'μ': mu.toFixed(4), 'σ²': sig2.toFixed(4), 'σ': sig.toFixed(4), 'Z': z.toFixed(4), 'Z crít.': '±1.96' },
-    verd: '|Z| = ' + Math.abs(z).toFixed(4) + (pass ? ' ≤ 1.96  →  PASA ✓' : ' > 1.96  →  FALLA ✗'),
-    rows: rows, note: n-1 > 300 ? 'Mostrando 300 de ' + (n-1) + ' pares' : ''
-  };
-}
-
-function testPoker(nums) {
-  var n = nums.length, i, j;
-  var keys = ['td','par','dp','ter','ful','pok','qui'];
-  var labs = { td:'Todos distintos', par:'Un par', dp:'Dos pares', ter:'Tercia', ful:'Full', pok:'Póker', qui:'Quintilla' };
-  var probs = { td:.3024, par:.504, dp:.108, ter:.072, ful:.009, pok:.0045, qui:.0001 };
-  var cats = { td:0, par:0, dp:0, ter:0, ful:0, pok:0, qui:0 };
-  var numRows = [];
-  for (i = 0; i < n; i++) {
-    var r = nums[i];
-    var str = r.toFixed(5).replace('0.','');
-    if (str.length < 5) while (str.length < 5) str = str + '0';
-    str = str.slice(0, 5);
-    var digs = [parseInt(str[0]), parseInt(str[1]), parseInt(str[2]), parseInt(str[3]), parseInt(str[4])];
-    var freq = {};
-    for (j = 0; j < 5; j++) freq[digs[j]] = (freq[digs[j]] || 0) + 1;
-    var counts = Object.keys(freq).map(function(k){ return freq[k]; }).sort(function(a,b){ return b-a; });
-    var cat;
-    if (counts[0]===1) cat='td';
-    else if (counts[0]===2 && (counts[1]||0)===1) cat='par';
-    else if (counts[0]===2 && counts[1]===2) cat='dp';
-    else if (counts[0]===3 && (counts[1]||0)===1) cat='ter';
-    else if (counts[0]===3 && counts[1]===2) cat='ful';
-    else if (counts[0]===4) cat='pok';
-    else cat='qui';
+function testPoker(nums){
+  var n=nums.length,i,j,keys=['td','par','dp','ter','ful','pok','qui'];
+  var labs={td:'Todos distintos',par:'Un par',dp:'Dos pares',ter:'Tercia',ful:'Full',pok:'Póker',qui:'Quintilla'};
+  var probs={td:.3024,par:.504,dp:.108,ter:.072,ful:.009,pok:.0045,qui:.0001};
+  var cats={td:0,par:0,dp:0,ter:0,ful:0,pok:0,qui:0},numRows=[];
+  for(i=0;i<n;i++){
+    var r=nums[i],str=r.toFixed(5).replace('0.','');
+    while(str.length<5)str=str+'0';str=str.slice(0,5);
+    var digs=[+str[0],+str[1],+str[2],+str[3],+str[4]],freq={};
+    for(j=0;j<5;j++)freq[digs[j]]=(freq[digs[j]]||0)+1;
+    var counts=Object.values(freq).sort(function(a,b){return b-a;});
+    var cat=counts[0]===1?'td':counts[0]===2&&(counts[1]||0)===1?'par':counts[0]===2&&counts[1]===2?'dp':counts[0]===3&&(counts[1]||0)===1?'ter':counts[0]===3&&counts[1]===2?'ful':counts[0]===4?'pok':'qui';
     cats[cat]++;
-    if (i < 300) numRows.push({ 'i': i+1, 'rᵢ': r.toFixed(6), 'Dígitos': digs.join(' '), 'Categoría': labs[cat] });
+    if(i<300)numRows.push({'i':i+1,'rᵢ':r.toFixed(6),'Dígitos':digs.join(' '),'Categoría':labs[cat]});
   }
-  var chi2 = 0, chiRows = [];
-  for (j = 0; j < keys.length; j++) {
-    var k = keys[j], o = cats[k], e = probs[k]*n, c = (o-e)*(o-e)/e; chi2 += c;
-    chiRows.push({ 'Categoría': labs[k], 'pᵢ': probs[k].toFixed(4), 'Oᵢ': o, 'Eᵢ=pᵢ·N': e.toFixed(4), 'Oᵢ−Eᵢ': (o-e).toFixed(4), '(Oᵢ−Eᵢ)²/Eᵢ': c.toFixed(6) });
+  var chi2=0,chiRows=[];
+  for(j=0;j<keys.length;j++){var k=keys[j],o=cats[k],e=probs[k]*n,c=(o-e)*(o-e)/e;chi2+=c;chiRows.push({'Categoría':labs[k],'pᵢ':probs[k].toFixed(4),'Oᵢ':o,'Eᵢ=pᵢ·N':e.toFixed(4),'Oᵢ−Eᵢ':(o-e).toFixed(4),'(Oᵢ−Eᵢ)²/Eᵢ':c.toFixed(6)});}
+  var crit=chiCrit(6),pass=chi2<=crit;
+  return{pass,det:{'N':n,'χ² calc.':chi2.toFixed(6),'gl':6,'χ² crít.':crit.toFixed(4)},
+    verd:'χ² = '+chi2.toFixed(4)+(pass?' ≤ ':' > ')+crit.toFixed(4)+'  →  '+(pass?'PASA ✓':'FALLA ✗'),
+    numRows,numNote:n>300?'Mostrando 300 de '+n:'',rows:chiRows,note:''};
+}
+function testMC(nums){
+  var pairs=Math.floor(nums.length/2),inside=0,i,rows=[];
+  for(i=0;i<pairs;i++){
+    var x=nums[i*2],y=nums[i*2+1],d2=x*x+y*y,inn=d2<=1;
+    if(inn)inside++;
+    if(i<300){var p=4*inside/(i+1);rows.push({'Par':i+1,'x':x.toFixed(6),'y':y.toFixed(6),'x²+y²':d2.toFixed(6),'≤1?':inn?'SÍ':'NO','Dentro':inside,'π est.':p.toFixed(6)});}
   }
-  var crit = chiCrit(6), pass = chi2 <= crit;
-  return {
-    pass: pass,
-    det: { 'N': n, 'χ² calc.': chi2.toFixed(6), 'gl': 6, 'χ² crít.': crit.toFixed(4) },
-    verd: 'χ² = ' + chi2.toFixed(4) + (pass ? ' ≤ ' : ' > ') + crit.toFixed(4) + '  →  ' + (pass ? 'PASA ✓' : 'FALLA ✗'),
-    numRows: numRows, numNote: n > 300 ? 'Mostrando 300 de ' + n : '',
-    rows: chiRows, note: ''
-  };
+  var piE=4*inside/pairs,err=Math.abs(piE-Math.PI)/Math.PI*100,pass=err<=5;
+  return{pass,det:{'Pares':pairs,'Dentro':inside,'π est.':piE.toFixed(6),'π real':Math.PI.toFixed(6),'Error %':err.toFixed(3)+'%'},
+    verd:'π ≈ '+piE.toFixed(6)+', error = '+err.toFixed(3)+'%  →  '+(pass?'PASA ✓':'FALLA ✗'),rows,note:pairs>300?'Mostrando 300 de '+pairs:''};
 }
 
-function testMC(nums) {
-  var pairs = Math.floor(nums.length / 2), inside = 0, i, rows = [];
-  for (i = 0; i < pairs; i++) {
-    var x = nums[i*2], y = nums[i*2+1], d2 = x*x+y*y, inn = d2 <= 1;
-    if (inn) inside++;
-    if (i < 300) { var p = 4*inside/(i+1); rows.push({ 'Par': i+1, 'x': x.toFixed(6), 'y': y.toFixed(6), 'x²+y²': d2.toFixed(6), '≤1?': inn?'SÍ':'NO', 'Dentro': inside, 'π est.': p.toFixed(6) }); }
-  }
-  var piE = 4*inside/pairs, err = Math.abs(piE - Math.PI)/Math.PI*100, pass = err <= 5;
-  return {
-    pass: pass,
-    det: { 'Pares': pairs, 'Dentro': inside, 'π est.': piE.toFixed(6), 'π real': Math.PI.toFixed(6), 'Error %': err.toFixed(3)+'%' },
-    verd: 'π ≈ ' + piE.toFixed(6) + ', error = ' + err.toFixed(3) + '%  →  ' + (pass ? 'PASA ✓' : 'FALLA ✗'),
-    rows: rows, note: pairs > 300 ? 'Mostrando 300 de ' + pairs : ''
-  };
-}
+function chiCrit(df){var t={1:3.841,2:5.991,3:7.815,4:9.488,5:11.07,6:12.592,7:14.067,8:15.507,9:16.919,10:18.307,15:24.996,20:31.41,25:37.652,30:43.773,40:55.758,50:67.505};if(t[df])return t[df];var h=2/(9*df);return df*Math.pow(1-h+1.645*Math.sqrt(h),3);}
+function chi025(df){var t={1:.001,2:.051,3:.216,4:.484,5:.831,6:1.237,7:1.69,8:2.18,9:2.7,10:3.247,15:6.262,20:9.591,30:16.791,50:32.357};if(t[df])return t[df];return Math.max(.001,df*Math.pow(1-2/(9*df)-1.96*Math.sqrt(2/(9*df)),3));}
 
-// ── HELPERS MATEMÁTICOS ──────────────────────────────────────────────────
-function chiCrit(df) {
-  var t = {1:3.841,2:5.991,3:7.815,4:9.488,5:11.07,6:12.592,7:14.067,8:15.507,9:16.919,10:18.307,15:24.996,20:31.41,25:37.652,30:43.773,40:55.758,50:67.505};
-  if (t[df]) return t[df];
-  var h = 2/(9*df); return df * Math.pow(1-h+1.645*Math.sqrt(h), 3);
-}
-function chi025(df) {
-  var t = {1:.001,2:.051,3:.216,4:.484,5:.831,6:1.237,7:1.69,8:2.18,9:2.7,10:3.247,15:6.262,20:9.591,30:16.791,50:32.357};
-  if (t[df]) return t[df];
-  return Math.max(.001, df * Math.pow(1-2/(9*df)-1.96*Math.sqrt(2/(9*df)), 3));
-}
-
-// ── TABLA / KV ───────────────────────────────────────────────────────────
-function mkTable(rows) {
-  if (!rows || !rows.length) return '';
-  var cols = Object.keys(rows[0]);
-  var h = '<div class="tscroll"><table><thead><tr>';
-  for (var c = 0; c < cols.length; c++) h += '<th>' + cols[c] + '</th>';
-  h += '</tr></thead><tbody>';
-  for (var r = 0; r < rows.length; r++) {
-    h += '<tr>';
-    for (var c = 0; c < cols.length; c++) {
-      var col = cols[c], val = rows[r][col], cls = '';
-      if (col === 'rᵢ = 0.Centro' || col === 'rᵢ válido' || col === 'ri') cls = ' class="tg"';
-      else if (col === 'Centro' || col === 'Dígitos' || col === 'Categoría' || col === 'βᵢ₊₁' || col === 'Xᵢ₊₁' || col === 'mod m') cls = ' class="tb"';
-      else if (col === 'Signo' && val === '+') cls = ' class="tg"';
-      else if (col === 'Signo' && val === '-') cls = ' class="tr"';
-      else if (col === 'Racha' && val === '★') cls = ' class="tb"';
-      else if (col === '≤1?' && val === 'SÍ') cls = ' class="tg"';
-      else if (col === '≤1?' && val === 'NO') cls = ' class="tr"';
-      h += '<td' + cls + '>' + val + '</td>';
+function mkTable(rows){
+  if(!rows||!rows.length)return'';
+  var cols=Object.keys(rows[0]),h='<div class="tscroll"><table><thead><tr>';
+  for(var c=0;c<cols.length;c++)h+='<th>'+cols[c]+'</th>';
+  h+='</tr></thead><tbody>';
+  for(var r=0;r<rows.length;r++){
+    h+='<tr>';
+    for(var c=0;c<cols.length;c++){
+      var col=cols[c],val=rows[r][col],cls='';
+      if(col==='rᵢ = 0.Centro'||col==='rᵢ válido'||col==='ri'||col==='rᵢ=Xₙ₊₁/m')cls=' class="tg"';
+      else if(col==='Centro'||col==='mod m'||col==='Xᵢ₊₁'||col==='βᵢ₊₁')cls=' class="tv"';
+      else if(col==='Signo'&&val==='+')cls=' class="tg"';
+      else if(col==='Signo'&&val==='-')cls=' class="tr"';
+      else if(col==='Racha'&&val==='★')cls=' class="tv"';
+      else if(col==='≤1?'&&val==='SÍ')cls=' class="tg"';
+      else if(col==='≤1?'&&val==='NO')cls=' class="tr"';
+      h+='<td'+cls+'>'+val+'</td>';
     }
-    h += '</tr>';
+    h+='</tr>';
   }
-  return h + '</tbody></table></div>';
+  return h+'</tbody></table></div>';
+}
+function mkKV(obj){var h='<div class="kv-grid">',keys=Object.keys(obj);for(var i=0;i<keys.length;i++)h+='<div class="kv-row"><span class="kk">'+keys[i]+'</span><span class="kv">'+obj[keys[i]]+'</span></div>';return h+'</div>';}
+function mkBlock(icon,title,badge,bc,body){return'<div class="result-block"><div class="result-head" onclick="tog(this)"><div class="rh-left"><span class="r-icon">'+icon+'</span><span class="r-name">'+title+'</span></div><span class="badge '+bc+'">'+badge+'</span></div><div class="result-body open">'+body+'</div></div>';}
+
+function run(){
+  if(!currentMethod){alert('Selecciona un método primero.');return;}
+  var nDesired,genRows,nums,genName,genKV,genTbl;
+  if(currentMethod==='mult'){
+    var alpha=parseInt(el('in_alpha').value,10),beta0=parseInt(el('in_beta').value,10);
+    nDesired=parseInt(el('in_nm').value,10);
+    if(!alpha||alpha<1){alert('Ingresa α.');return;}if(!beta0||beta0<1){alert('Ingresa β₀.');return;}if(!nDesired||nDesired<1){alert('Ingresa N.');return;}
+    genRows=genMult(alpha,beta0,Math.max(nDesired*5,2000));nums=genRows.map(function(r){return r.ri;});
+    genName='Multiplicativo (α×β)';genKV={'α (fija)':alpha,'β₀ inicial':beta0,'Iteraciones':genRows.length,'rᵢ generados':nums.length};
+    genTbl=genRows.map(function(row,idx){return{'i':row.i,'α':row.alpha,'β':row.beta,'α×β':row.prod,'Prod. 8 díg.':row.s8,'Centro':row.centro,'rᵢ = 0.Centro':row.ri.toFixed(6),'βᵢ₊₁':idx+1<genRows.length?genRows[idx+1].beta:'(fin)'};});
+  }else if(currentMethod==='cuad'){
+    var x0=parseInt(el('in_x0').value,10),d=parseInt(el('in_d').value,10)||4;
+    nDesired=parseInt(el('in_nc').value,10);
+    if(!x0||x0<1){alert('Ingresa X₀.');return;}if(!nDesired||nDesired<1){alert('Ingresa N.');return;}
+    genRows=genCuad(x0,d,Math.max(nDesired*5,2000));nums=genRows.map(function(r){return r.ri;});
+    genName='Cuadrados Medios (d='+d+')';genKV={'X₀':x0,'d':d,'Módulo 10ᵈ':Math.pow(10,d),'Iteraciones':genRows.length,'rᵢ generados':nums.length};
+    genTbl=genRows.map(function(row,idx){return{'i':row.i,'Xᵢ₋₁':row.xp,'Xᵢ₋₁²':row.sq,'X² (pad)':row.s2d,'Centro':row.centro,'Xᵢ':row.xi,'rᵢ = Xᵢ/10ᵈ':row.ri.toFixed(6),'Xᵢ₊₁':idx+1<genRows.length?genRows[idx+1].xp:'(fin)'};});
+  }else if(currentMethod==='clin'){
+    var x0cl=parseInt(el('in_cl_x0').value,10),acl=parseInt(el('in_cl_a').value,10),ccl=parseInt(el('in_cl_c').value,10),mcl=parseInt(el('in_cl_m').value,10);
+    nDesired=parseInt(el('in_cl_n').value,10);
+    if(isNaN(x0cl)||x0cl<0){alert('Ingresa X₀.');return;}if(!acl||acl<1){alert('Ingresa a.');return;}if(isNaN(ccl)||ccl<0){alert('Ingresa c.');return;}if(!mcl||mcl<2){alert('Ingresa m.');return;}if(!nDesired||nDesired<1){alert('Ingresa N.');return;}
+    genRows=genCongruencialLineal(x0cl,acl,ccl,mcl,Math.max(nDesired*5,2000));nums=genRows.map(function(r){return r.ri;});
+    genName='Congruencial Lineal';genKV={'X₀':x0cl,'a':acl,'c':ccl,'m':mcl,'Iteraciones':genRows.length,'rᵢ generados':nums.length};
+    genTbl=genRows.map(function(row,idx){return{'i':row.i,'Xₙ':row.xn_prev,'a·Xₙ+c':row['a·Xₙ+c'],'Xₙ₊₁=mod m':row['mod m'],'rᵢ=Xₙ₊₁/m':row.ri.toFixed(6),'Xₙ₊₂':idx+1<genRows.length?genRows[idx+1].xn_prev:'(fin)'};});
+  }else if(currentMethod==='cmul'){
+    var x0cm=parseInt(el('in_cm_x0').value,10),acm=parseInt(el('in_cm_a').value,10),mcm=parseInt(el('in_cm_m').value,10);
+    nDesired=parseInt(el('in_cm_n').value,10);
+    if(!x0cm||x0cm<1){alert('Ingresa X₀.');return;}if(x0cm%2===0){alert('X₀ debe ser impar.');return;}if(!acm||acm<1){alert('Ingresa a.');return;}if(!mcm||mcm<2){alert('Ingresa m.');return;}if(!nDesired||nDesired<1){alert('Ingresa N.');return;}
+    genRows=genCongruencialMult(x0cm,acm,mcm,Math.max(nDesired*5,2000));nums=genRows.map(function(r){return r.ri;});
+    genName='Congruencial Multiplicativo';genKV={'X₀':x0cm,'a':acm,'m':mcm,'Iteraciones':genRows.length,'rᵢ generados':nums.length};
+    genTbl=genRows.map(function(row,idx){return{'i':row.i,'Xₙ':row.xn_prev,'a·Xₙ':row['a·Xₙ'],'Xₙ₊₁=mod m':row['mod m'],'rᵢ=Xₙ₊₁/m':row.ri.toFixed(6),'Xₙ₊₂':idx+1<genRows.length?genRows[idx+1].xn_prev:'(fin)'};});
+  }
+
+  if(nums.length<5){
+    el('results').style.display='block';el('strip').innerHTML='';
+    el('blocks').innerHTML='<div class="err-box">⚠ Solo se generaron '+nums.length+' número(s) únicos. El ciclo es muy corto. Cambia los parámetros.</div>';
+    el('results').scrollIntoView({behavior:'smooth'});return;
+  }
+
+  var numsUsed=nums.length>nDesired?nums.slice(0,nDesired):nums,genTblUsed=genTbl.length>nDesired?genTbl.slice(0,nDesired):genTbl,canDeliver=numsUsed.length>=nDesired;
+  var testDefs=[{id:'cb_med',fn:testMedias,name:'Prueba de Medias'},{id:'cb_var',fn:testVarianza,name:'Prueba de Varianza'},{id:'cb_chi',fn:testChi,name:'Chi Cuadrada'},{id:'cb_ks',fn:testKS,name:'Kolmogórov-Smirnov'},{id:'cb_aa',fn:testArriba,name:'Arriba y Abajo'},{id:'cb_pk',fn:testPoker,name:'Póker'},{id:'cb_mc',fn:testMC,name:'Monte Carlo π'}];
+  var selected=[],allPass=true;
+  for(var i=0;i<testDefs.length;i++){if(isOn(testDefs[i].id)){var res=testDefs[i].fn(numsUsed);selected.push({name:testDefs[i].name,res:res});if(!res.pass)allPass=false;}}
+  var passed=0;for(var i=0;i<selected.length;i++)if(selected[i].res.pass)passed++;
+  var failed=selected.length-passed;
+
+  el('strip').innerHTML=
+    '<div class="stat-card"><div class="stat-val c-violet" style="font-size:13px;line-height:1.3;margin-bottom:10px;">'+genName+'</div><div class="stat-label">Método</div></div>'+
+    '<div class="stat-card"><div class="stat-val c-white">'+nums.length+'</div><div class="stat-label">Únicos generados</div></div>'+
+    '<div class="stat-card"><div class="stat-val c-green">'+passed+'</div><div class="stat-label">Pruebas OK</div></div>'+
+    '<div class="stat-card"><div class="stat-val '+(failed>0?'c-red':'c-green')+'">'+failed+'</div><div class="stat-label">Fallidas</div></div>'+
+    '<div class="stat-card"><div class="stat-val '+(canDeliver?'c-green':'c-red')+'">'+numsUsed.length+'/'+nDesired+'</div><div class="stat-label">N válidos</div></div>'+
+    '<div class="stat-card"><div class="stat-val '+(allPass&&canDeliver?'c-green':'c-red')+'" style="font-size:18px;">'+(allPass&&canDeliver?'PASA ✓':'FALLA ✗')+'</div><div class="stat-label">Veredicto</div></div>';
+
+  var html='';
+  html+=mkBlock('⬡','Generación — '+genName,genRows.length+' únicos','b-info',
+    mkKV(genKV)+(!canDeliver?'<div class="vline vw">⚠ Solo se generaron '+nums.length+' únicos. Se pedían '+nDesired+'. Cambia los parámetros.</div>':'')+
+    '<div class="tbl-title">Tabla paso a paso</div>'+mkTable(genTblUsed.slice(0,300))+(genTblUsed.length>300?'<p class="tbl-note">Mostrando 300 de '+genTblUsed.length+'</p>':''));
+
+  for(var i=0;i<selected.length;i++){
+    var s=selected[i],r=s.res,body='<div class="vline '+(r.pass?'vp':'vf')+'">'+r.verd+'</div>'+mkKV(r.det);
+    if(s.name==='Póker'){body+='<div class="tbl-title">Clasificación</div>'+mkTable(r.numRows)+(r.numNote?'<p class="tbl-note">'+r.numNote+'</p>':'');body+='<div class="tbl-title">Chi Cuadrada</div>'+mkTable(r.rows);}
+    else if(r.rows&&r.rows.length){body+='<div class="tbl-title">Tabla paso a paso</div>'+mkTable(r.rows)+(r.note?'<p class="tbl-note">'+r.note+'</p>':'');}
+    html+=mkBlock('◈',s.name,r.pass?'PASA':'FALLA',r.pass?'b-pass':'b-fail',body);
+  }
+
+  if(allPass&&canDeliver){
+    var vrows=[];for(var i=0;i<numsUsed.length;i++)vrows.push({'N°':i+1,'rᵢ válido':numsUsed[i].toFixed(6)});
+    html+=mkBlock('✓','Números válidos',numsUsed.length+' de '+nDesired,'b-pass','<div class="vline vp">Se obtuvieron '+numsUsed.length+' de '+nDesired+' números únicos. La semilla aprueba todas las pruebas.</div><div class="tbl-title">Lista rᵢ</div>'+mkTable(vrows));
+  }else if(!canDeliver){
+    html+='<div class="err-box">⚠ No se pudieron generar '+nDesired+' números únicos (ciclo de longitud '+nums.length+'). Cambia la semilla o los parámetros.</div>';
+  }else if(!allPass){
+    html+='<div class="err-box">⚠ La semilla no aprueba todas las pruebas seleccionadas.</div>';
+  }
+
+  el('blocks').innerHTML=html;el('results').style.display='block';el('results').scrollIntoView({behavior:'smooth'});
 }
 
-function mkKV(obj) {
-  var h = '<div class="kv-grid">', keys = Object.keys(obj);
-  for (var i = 0; i < keys.length; i++) h += '<div class="kv"><span class="k">' + keys[i] + '</span><span class="v">' + obj[keys[i]] + '</span></div>';
-  return h + '</div>';
-}
-
-function mkBlock(title, badge, bclass, body) {
-  return '<div class="rblock"><div class="rhead" onclick="tog(this)"><span class="rname">' + title + '</span><span class="badge ' + bclass + '">' + badge + '</span></div><div class="rbody open">' + body + '</div></div>';
-}
-
-// ── MAIN ─────────────────────────────────────────────────────────────────
-function run() {
-  if (!currentMethod) { alert('Primero selecciona un método.'); return; }
-
-  var nDesired, genRows, nums, genName, genKV, genTbl;
-
-  if (currentMethod === 'mult') {
-    var alpha = parseInt(el('in_alpha').value, 10);
-    var beta0 = parseInt(el('in_beta').value, 10);
-    nDesired  = parseInt(el('in_nm').value, 10);
-    if (!alpha || alpha < 1) { alert('Ingresa α (alfa).'); return; }
-    if (!beta0 || beta0 < 1) { alert('Ingresa β₀ (beta).'); return; }
-    if (!nDesired || nDesired < 1) { alert('Ingresa N válidos.'); return; }
-
-    genRows = genMult(alpha, beta0, Math.max(nDesired * 5, 2000));
-    nums = genRows.map(function(r){ return r.ri; });
-    genName = 'Multiplicativo (α×β)';
-    genKV = { 'α (fija)': alpha, 'β₀ inicial': beta0, 'Iteraciones': genRows.length, 'rᵢ generados': nums.length };
-    genTbl = genRows.map(function(row, idx) {
-      return { 'i': row.i, 'α': row.alpha, 'β': row.beta, 'α×β': row.prod, 'Prod. 8 díg.': row.s8, 'Centro': row.centro, 'rᵢ = 0.Centro': row.ri.toFixed(6), 'βᵢ₊₁': idx+1 < genRows.length ? genRows[idx+1].beta : '(fin)' };
-    });
-
-  } else if (currentMethod === 'cuad') {
-    var x0  = parseInt(el('in_x0').value, 10);
-    var d   = parseInt(el('in_d').value, 10) || 4;
-    nDesired = parseInt(el('in_nc').value, 10);
-    if (!x0 || x0 < 1) { alert('Ingresa X₀.'); return; }
-    if (!nDesired || nDesired < 1) { alert('Ingresa N válidos.'); return; }
-
-    genRows = genCuad(x0, d, Math.max(nDesired * 5, 2000));
-    nums = genRows.map(function(r){ return r.ri; });
-    genName = 'Cuadrados Medios (d=' + d + ')';
-    genKV = { 'X₀': x0, 'd (dígitos)': d, 'Módulo 10ᵈ': Math.pow(10,d), 'Iteraciones': genRows.length, 'rᵢ generados': nums.length };
-    genTbl = genRows.map(function(row, idx) {
-      return { 'i': row.i, 'Xᵢ₋₁': row.xp, 'Xᵢ₋₁²': row.sq, 'X² (pad)': row.s2d, 'Centro': row.centro, 'Xᵢ': row.xi, 'rᵢ = Xᵢ/10ᵈ': row.ri.toFixed(6), 'Xᵢ₊₁': idx+1 < genRows.length ? genRows[idx+1].xp : '(fin)' };
-    });
-
-  } else if (currentMethod === 'clin') {
-    var x0cl = parseInt(el('in_cl_x0').value, 10);
-    var acl  = parseInt(el('in_cl_a').value, 10);
-    var ccl  = parseInt(el('in_cl_c').value, 10);
-    var mcl  = parseInt(el('in_cl_m').value, 10);
-    nDesired  = parseInt(el('in_cl_n').value, 10);
-    if (isNaN(x0cl) || x0cl < 0) { alert('Ingresa X₀ (≥ 0).'); return; }
-    if (!acl || acl < 1) { alert('Ingresa a (multiplicador).'); return; }
-    if (isNaN(ccl) || ccl < 0) { alert('Ingresa c (incremento ≥ 0).'); return; }
-    if (!mcl || mcl < 2) { alert('Ingresa m (módulo > 1).'); return; }
-    if (!nDesired || nDesired < 1) { alert('Ingresa N válidos.'); return; }
-
-    genRows = genCongruencialLineal(x0cl, acl, ccl, mcl, Math.max(nDesired * 5, 2000));
-    nums = genRows.map(function(r){ return r.ri; });
-    genName = 'Congruencial Lineal';
-    genKV = { 'X₀': x0cl, 'a': acl, 'c': ccl, 'm': mcl, 'Iteraciones': genRows.length, 'rᵢ generados': nums.length };
-    genTbl = genRows.map(function(row, idx) {
-      return { 'i': row.i, 'Xₙ': row.xn_prev, 'a·Xₙ+c': row['a·Xₙ+c'], 'Xₙ₊₁=mod m': row['mod m'], 'rᵢ=Xₙ₊₁/m': row.ri.toFixed(6), 'Xₙ₊₂': idx+1 < genRows.length ? genRows[idx+1].xn_prev : '(fin)' };
-    });
-
-  } else if (currentMethod === 'cmul') {
-    var x0cm = parseInt(el('in_cm_x0').value, 10);
-    var acm  = parseInt(el('in_cm_a').value, 10);
-    var mcm  = parseInt(el('in_cm_m').value, 10);
-    nDesired  = parseInt(el('in_cm_n').value, 10);
-    if (!x0cm || x0cm < 1) { alert('Ingresa X₀ (debe ser impar > 0).'); return; }
-    if (x0cm % 2 === 0) { alert('X₀ debe ser impar para el método Congruencial Multiplicativo.'); return; }
-    if (!acm || acm < 1) { alert('Ingresa a (multiplicador).'); return; }
-    if (!mcm || mcm < 2) { alert('Ingresa m (módulo > 1, idealmente potencia de 2).'); return; }
-    if (!nDesired || nDesired < 1) { alert('Ingresa N válidos.'); return; }
-
-    genRows = genCongruencialMult(x0cm, acm, mcm, Math.max(nDesired * 5, 2000));
-    nums = genRows.map(function(r){ return r.ri; });
-    genName = 'Congruencial Multiplicativo';
-    genKV = { 'X₀': x0cm, 'a': acm, 'm': mcm, 'Iteraciones': genRows.length, 'rᵢ generados': nums.length };
-    genTbl = genRows.map(function(row, idx) {
-      return { 'i': row.i, 'Xₙ': row.xn_prev, 'a·Xₙ': row['a·Xₙ'], 'Xₙ₊₁=mod m': row['mod m'], 'rᵢ=Xₙ₊₁/m': row.ri.toFixed(6), 'Xₙ₊₂': idx+1 < genRows.length ? genRows[idx+1].xn_prev : '(fin)' };
-    });
-  }
-
-  if (nums.length < 5) {
-    el('results').style.display = 'block';
-    el('strip').innerHTML = '';
-    el('blocks').innerHTML = '<div class="errbox">⚠ Muy pocos números generados (' + nums.length + '). El ciclo es muy corto o colapsó a 0. Cambia los parámetros.</div>';
-    el('results').scrollIntoView({ behavior: 'smooth' });
-    return;
-  }
-
-  // Limitar a nDesired si se generaron más
-  var numsUsed = nums.length > nDesired ? nums.slice(0, nDesired) : nums;
-  var genTblUsed = genTbl.length > nDesired ? genTbl.slice(0, nDesired) : genTbl;
-
-  var testDefs = [
-    { id: 'cb_med', fn: testMedias, name: 'Prueba de Medias' },
-    { id: 'cb_var', fn: testVarianza, name: 'Prueba de Varianza' },
-    { id: 'cb_chi', fn: testChi, name: 'Chi Cuadrada' },
-    { id: 'cb_ks',  fn: testKS, name: 'Kolmogórov-Smirnov' },
-    { id: 'cb_aa',  fn: testArriba, name: 'Arriba y Abajo' },
-    { id: 'cb_pk',  fn: testPoker, name: 'Póker' },
-    { id: 'cb_mc',  fn: testMC, name: 'Monte Carlo π' }
-  ];
-
-  var selected = [], allPass = true;
-  for (var i = 0; i < testDefs.length; i++) {
-    if (isOn(testDefs[i].id)) {
-      var res = testDefs[i].fn(numsUsed);
-      selected.push({ name: testDefs[i].name, res: res });
-      if (!res.pass) allPass = false;
-    }
-  }
-
-  var passed = 0;
-  for (var i = 0; i < selected.length; i++) if (selected[i].res.pass) passed++;
-  var failed = selected.length - passed;
-  var obtained = numsUsed.length;
-  var canDeliver = obtained >= nDesired;
-
-  el('strip').innerHTML =
-    '<div class="sbox"><div class="sv bc" style="font-size:11px;line-height:1.4;">' + genName + '</div><div class="sl">Método</div></div>' +
-    '<div class="sbox"><div class="sv wc">' + nums.length + '</div><div class="sl">Únicos generados</div></div>' +
-    '<div class="sbox"><div class="sv gc">' + passed + '</div><div class="sl">Pruebas OK</div></div>' +
-    '<div class="sbox"><div class="sv ' + (failed > 0 ? 'rc' : 'gc') + '">' + failed + '</div><div class="sl">Fallidas</div></div>' +
-    '<div class="sbox"><div class="sv ' + (canDeliver ? 'gc' : 'rc') + '">' + obtained + '/' + nDesired + '</div><div class="sl">N válidos</div></div>' +
-    '<div class="sbox"><div class="sv ' + (allPass && canDeliver ? 'gc' : 'rc') + '" style="font-size:16px;">' + (allPass && canDeliver ? 'PASA' : 'FALLA') + '</div><div class="sl">Veredicto</div></div>';
-
-  var html = '';
-
-  html += mkBlock('⬡ Generación — ' + genName, genRows.length + ' únicos', 'info-b',
-    mkKV(genKV) +
-    (!canDeliver ? '<div class="vline vf">⚠ Solo se generaron ' + nums.length + ' números únicos antes de que el ciclo se repitiera. Se necesitan ' + nDesired + '. Cambia los parámetros.</div>' : '') +
-    '<div class="tit">Tabla paso a paso (primeros ' + Math.min(genTblUsed.length, 300) + ')</div>' + mkTable(genTblUsed.slice(0, 300)) +
-    (genTblUsed.length > 300 ? '<p class="tnote">Mostrando 300 de ' + genTblUsed.length + '</p>' : ''));
-
-  for (var i = 0; i < selected.length; i++) {
-    var s = selected[i], r = s.res;
-    var body = '<div class="vline ' + (r.pass ? 'vp' : 'vf') + '">' + r.verd + '</div>' + mkKV(r.det);
-    if (s.name === 'Póker') {
-      body += '<div class="tit">Clasificación por número</div>' + mkTable(r.numRows) + (r.numNote ? '<p class="tnote">' + r.numNote + '</p>' : '');
-      body += '<div class="tit">Resumen Chi Cuadrada</div>' + mkTable(r.rows);
-    } else if (r.rows && r.rows.length) {
-      body += '<div class="tit">Tabla paso a paso</div>' + mkTable(r.rows) + (r.note ? '<p class="tnote">' + r.note + '</p>' : '');
-    }
-    html += mkBlock(s.name, r.pass ? 'PASA' : 'FALLA', r.pass ? 'pass-b' : 'fail-b', body);
-  }
-
-  if (allPass && canDeliver) {
-    var vrows = [];
-    for (var i = 0; i < obtained; i++) vrows.push({ 'N°': i+1, 'rᵢ válido': numsUsed[i].toFixed(6) });
-    html += mkBlock('✓ Números válidos', obtained + ' de ' + nDesired, 'pass-b',
-      '<div class="vline vp">Se obtuvieron ' + obtained + ' de ' + nDesired + ' números válidos únicos. La semilla aprueba todas las pruebas.</div>' +
-      '<div class="tit">Lista rᵢ</div>' + mkTable(vrows));
-  } else if (!canDeliver) {
-    html += '<div class="errbox">⚠ No se pudieron generar ' + nDesired + ' números únicos con estos parámetros (ciclo de longitud ' + nums.length + '). Cambia la semilla o los parámetros.</div>';
-  } else if (!allPass) {
-    html += '<div class="errbox">⚠ La semilla no aprueba todas las pruebas seleccionadas. Revisa los resultados anteriores.</div>';
-  }
-
-  el('blocks').innerHTML = html;
-  el('results').style.display = 'block';
-  el('results').scrollIntoView({ behavior: 'smooth' });
-}
-
-function resetApp() {
-  currentMethod = null;
-  var all = ['mult','cuad','clin','cmul'];
-  for (var i = 0; i < all.length; i++) {
-    el('btn_' + all[i]).className = 'mbtn';
-    el('panel_' + all[i]).style.display = 'none';
-  }
-  var fields = ['in_alpha','in_beta','in_x0','in_cl_x0','in_cl_a','in_cl_c','in_cl_m','in_cm_x0','in_cm_a','in_cm_m'];
-  for (var i = 0; i < fields.length; i++) el(fields[i]).value = '';
-  el('in_d').value = '4';
-  el('in_nm').value = '50'; el('in_nc').value = '50'; el('in_cl_n').value = '50'; el('in_cm_n').value = '50';
-  toggleAll(false);
-  el('results').style.display = 'none';
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+function resetApp(){
+  currentMethod=null;
+  ['mult','cuad','clin','cmul'].forEach(function(k){el('btn_'+k).className='method-btn';el('panel_'+k).style.display='none';});
+  ['in_alpha','in_beta','in_x0','in_cl_x0','in_cl_a','in_cl_c','in_cl_m','in_cm_x0','in_cm_a','in_cm_m'].forEach(function(f){el(f).value='';});
+  el('in_d').value='4';['in_nm','in_nc','in_cl_n','in_cm_n'].forEach(function(f){el(f).value='50';});
+  toggleAll(false);el('results').style.display='none';window.scrollTo({top:0,behavior:'smooth'});
 }
 </script>
 </body>
